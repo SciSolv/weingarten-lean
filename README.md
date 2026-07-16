@@ -2,6 +2,8 @@
 
 A Lean 4 / Mathlib formalization of the algebraic foundations of **Weingarten calculus** across all three classical series — the unitary group `U(N)`, the orthogonal group `O(N)`, and the symplectic group `Sp(N)` — together with the `U(N)` Haar-integration bridge at the formalized degrees.
 
+Repository: [github.com/SciSolv/weingarten-lean](https://github.com/SciSolv/weingarten-lean)
+
 Every result here is machine-checked down to the logical axioms. To the best of a careful (but finite) search, this is the first end-to-end, computer-verified account of this foundational layer in any proof assistant.
 
 ## Build Instructions
@@ -30,7 +32,7 @@ A clean `lake build` with no errors is a complete verification of every result d
 A paper-level write-up of every definition and proof — with the per-node Lean correspondence — is kept under [`docs/`](docs/), so it is available without building the web version:
 
 - **[`docs/blueprint.pdf`](docs/blueprint.pdf)** — the full blueprint as a PDF.
-- **[`docs/dependency_graph.pdf`](docs/dependency_graph.pdf)** ([preview](docs/dependency_graph.png)) — the theorem dependency graph (121 nodes, 219 edges); every theorem-class node is Lean-verified (`leanok`) or Mathlib-provided (`mathlibok`) — the five prose remarks carry no proof obligation and are marked as such in the graph legend.
+- **[`docs/dependency_graph.pdf`](docs/dependency_graph.pdf)** ([preview](docs/dependency_graph.png)) — the theorem dependency graph (132 nodes, 239 edges); every theorem-class node is Lean-verified (`leanok`) or Mathlib-provided (`mathlibok`) — the five prose remarks carry no proof obligation and are marked as such in the graph legend.
 
 The `blueprint/src/` LaTeX sources are kept intact for the interactive web blueprint (the eventual GitHub Pages target); see [`docs/README.md`](docs/README.md) to regenerate.
 
@@ -62,7 +64,7 @@ This project is a formalization of the algebraic foundations of Weingarten calcu
 - the two **sum rules** obtained by pushing the trivial character and the sign character through that factorization;
 - the **sign pattern**: in the stable range (`N ≥ n`), the sign of the Weingarten function is exactly the sign of the permutation;
 - a **closed-form ratio** `∏(N−j)/(N+j)` governing how the cancellations balance;
-- the **below-threshold regime** (`N < n`), where the Gram matrix is singular and the naive formula breaks down — here the signed sums are shown to vanish exactly (conditionally, for any Penrose partner — see below), via a character-table-free route valid at every `N`;
+- the **below-threshold regime** (`N < n`), where the Gram matrix is singular and the naive formula breaks down — here the signed sums are shown to vanish exactly (conditionally, for any Penrose partner — see below), via a character-table-free route valid at every `N`; the singular set is exhibited on **both sides of zero** (the alternating element detects the roots `1 ≤ N < n`, the all-ones element the roots `−(n−1) ≤ N ≤ 0` — together the full integer band `{−(n−1),…,n−1}`), and the conditional sum rules also come in **per-eigenvalue** form: only the single relevant factorial needs to be a unit, not the whole Gram matrix, so they apply at singular cells too;
 - the **orthogonal and symplectic analogues**, including the hardest single component: the crossing-sign factorization of the symplectic Gram matrix;
 - the **`U(N)` Haar-integration bridge at the formalized degrees** (`Weingarten/Haar/`): the Haar expectation constructed for all `N` from Mathlib's Haar measure, the `n = 1` and `n = 2` entry-integral tables, `E|Tr U|² = 1` and `E|Tr U|⁴ = 2`, the `n = 1, 2` Weingarten values, and the one-matrix-model coefficients `w₁ = 1/2`, `w₂ = w₃ = w₄ = 0` (for `N ≥ 2`). The general-`n` Collins–Śniady moment formula remains out of scope.
 
@@ -76,7 +78,7 @@ This project instead characterizes the Weingarten function `W` via the two **Pen
 G W G = G        W G W = W
 ```
 
-These make sense at *every* `N`, invertible or not. The **Moore–Penrose pseudo-inverse** satisfies both (as does the genuine inverse when it exists), but the two equations alone do not pin down a unique `W`; the full four-equation Moore–Penrose uniqueness is certified in the `(2,3)` cell (`Weingarten.Cell23`) and follows in general for symmetric commuting pairs (`penrose_unique_of_symm_comm`). This pseudo-inverse characterization is the one used by Zinn-Justin and by Collins–Matsumoto; what "character-table-free" means here is that the spectral data enters through Young idempotents and box contents (`∏(N + content)`) rather than through explicit irreducible-character tables or zonal-polynomial expansions — it is still representation theory, in a lighter and more computable disguise. On this footing, the below-threshold facts become short arguments. For example, the signed sum vanishes below threshold in a few lines: the sign character sends `G` to the falling factorial `N(N−1)⋯(N−n+1)`, which hits zero when `1 ≤ N < n`, and `W G W = W` then forces the signed sum of `W` to zero.
+These make sense at *every* `N`, invertible or not. The **Moore–Penrose pseudo-inverse** satisfies both (as does the genuine inverse when it exists). In a general matrix algebra the two equations alone do not pin down a unique `W` (they define a *reflexive generalized inverse*) — but for the Gram element itself they do: the Gram element is **central** in the group algebra (`gram_central`), commutation with it is automatic, and any two Penrose partners coincide (`gram_penrose_partner_unique`, machine-checked; `penrose_partner_unique` is the underlying monoid-level group-inverse uniqueness). The full four-equation Moore–Penrose uniqueness is additionally certified in the `(2,3)` cell (`Weingarten.Cell23`) and for symmetric commuting pairs (`penrose_unique_of_symm_comm`). This pseudo-inverse characterization is the one used by Zinn-Justin and by Collins–Matsumoto; what "character-table-free" means here is that the spectral data enters through Young idempotents and box contents (`∏(N + content)`) rather than through explicit irreducible-character tables or zonal-polynomial expansions — it is still representation theory, in a lighter and more computable disguise. On this footing, the below-threshold facts become short arguments. For example, the signed sum vanishes below threshold in a few lines: the sign character sends `G` to the falling factorial `N(N−1)⋯(N−n+1)`, which hits zero when `1 ≤ N < n`, and `W G W = W` then forces the signed sum of `W` to zero.
 
 ## The orthogonal and symplectic cases
 
@@ -114,7 +116,7 @@ A single polynomial identity is proved once and yields both the orthogonal and s
 
 The measure-theoretic layer that connects this algebra to genuine integrals over `U(N)` lives under `Weingarten/Haar/`. The module family:
 
-- `HaarExpectation` — the invariance interface: a normalized, two-sided translation-invariant expectation on `C(U(N), ℂ)`;
+- `HaarExpectation` — the invariance interface: a normalized, two-sided translation-invariant linear functional on `C(U(N), ℂ)` (positivity is deliberately omitted — every Haar *state* in the Banica–Collins sense restricts to an instance, and the constructed Haar measure provides a positive one; the moment theorems consume only linearity, normalization, and bi-invariance);
 - `HaarConstruction` (with `SecondCountableShim`) — the interface inhabited for **all** `N` from Mathlib's Haar measure on the compact group `U(N)`;
 - `MatrixEntryIntegrals` — the complete `n = 1` entry table `E[U_ij · conj(U_kl)] = δ_ik δ_jl / N`, plus `E[Tr U] = 0` and `E|Tr U|² = 1`;
 - `EntryIntegralsTwo` — the `n = 2` fourth-moment table (matched, crossed, and diagonal index patterns) and `E|Tr U|⁴ = 2` for `N ≥ 2`;
@@ -143,7 +145,15 @@ The project should be read as a verification artifact rather than as a claim of 
 
 ## Verification
 
-The verification standard for the repository is the Lean development itself: all theorems are intended to build without `sorry` or `native_decide`, and the stated axiom profile is checked with `#print axioms`.  As a second, independent line of defense — against a definition that quietly fails to match the literature, or a transcription slip in a statement — the `scripts/` directory recomputes the finite content of every computational theorem from scratch, in exact rational arithmetic (Python standard library only — no floats, no external packages), and checks it against a genuinely independent computation.
+The verification standard for the repository is the Lean development itself: all theorems are intended to build without `sorry` or `native_decide`, and the stated axiom profile is checked with `#print axioms`. Both properties are audited mechanically: [`scripts/AxiomsAudit.lean`](scripts/AxiomsAudit.lean) walks every `Weingarten` constant in the compiled environment with `Lean.collectAxioms` and fails (nonzero exit) if any axiom outside `propext`, `Classical.choice`, `Quot.sound` appears — which soundly excludes any `sorry` (`sorryAx`) and any `native_decide` (`Lean.ofReduceBool` / `Lean.ofReduceNat`) in the same pass. Run it from the repository root, after `lake build`:
+
+```sh
+lake env lean scripts/AxiomsAudit.lean
+```
+
+Continuous integration ([`.github/workflows/blueprint.yml`](.github/workflows/blueprint.yml)) gates every push on all three checks: the clean `lake build` (a complete kernel verification of every result), the axiom audit above, and the exact-arithmetic cross-check suites (`python3 scripts/verify_all.py`, described below). The blueprint PDF and dependency graph are committed under [`docs/`](docs/); regenerating them is deliberately not part of CI.
+
+As a second, independent line of defense — against a definition that quietly fails to match the literature, or a transcription slip in a statement — the `scripts/` directory recomputes the finite content of every computational theorem from scratch, in exact rational arithmetic (Python standard library only — no floats, no external packages), and checks it against a genuinely independent computation.
 
 The checks are **exhaustive up to a size bound**: all of `Sₙ` for `n ≤ 5` (the sum rules to `n ≤ 7`), and all `(2n−1)!!` pairings for `2n ≤ 8`. Each one pits two unrelated computations against each other rather than re-running one formula twice. For instance, the symplectic capstone contracts the symplectic form directly along every index assignment of the two pairings and compares the raw result to the closed `ε(π)·ε(σ)·(−1)ⁿ·(−2M)^loops` formula; the unitary spine compares a brute-force sum over `Sₙ` to the Jucys–Murphy product, and an exact Gram inverse to the sign-of-permutation predicate. The genuinely analytic statements (the `ℓ¹`/Neumann invertibility, the `tsum` expansions) have no finite content to enumerate and are exercised only through their finite numeric consequences.
 
@@ -153,7 +163,7 @@ Run the whole suite:
 python scripts/verify_all.py
 ```
 
-It executes all ten suites — four per-theorem suites plus the original convention and proof-step checks — and prints a `PASS` line per theorem. [`scripts/VERIFICATION.md`](scripts/VERIFICATION.md) is the per-theorem ledger: what each check computes, the bound it covers, and which statements are Lean-only.
+It executes all eleven suites — five per-theorem suites plus the original convention and proof-step checks — and prints a `PASS` line per theorem. [`scripts/VERIFICATION.md`](scripts/VERIFICATION.md) is the per-theorem ledger: what each check computes, the bound it covers, and which statements are Lean-only.
 
 ## Reproducibility
 

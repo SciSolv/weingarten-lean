@@ -13,7 +13,8 @@ Blueprint: `def:j_form`, `def:delta_contr`, `def:symp_gram_contr`,
 `cor:symp_conjugation`, `def:eps_det_vector`, `def:even_falling`,
 `def:rising_shift`, `thm:symp_eps_ones_absorb`, `thm:symp_eps_det_absorb`,
 `thm:symp_ker_witness`, `thm:symp_not_unit`, `thm:symp_vanish_below`,
-`thm:symp_even_falling_rule`, `thm:symp_rising_shift_rule`.
+`thm:symp_even_falling_rule`, `thm:symp_rising_shift_rule`,
+`thm:symp_even_falling_rule_eigen`, `thm:symp_rising_shift_rule_eigen`.
 
 The symplectic Gram of canonical `J`-contractions factorizes as
 `ε(p) ε(q) (-1)^n (-2M)^loops` with `ε` the crossing parity
@@ -2941,5 +2942,33 @@ theorem risingShift_smul_vecMul_epsDetVec {k : Type*} [CommRing k] {M n : ℕ}
   have hGW : sympGramClosed k M n * W = 1 := hW.mul_eq_one_of_isUnit hu
   rw [← Matrix.smul_vecMul, ← sympGram_mulVec_epsDetVec, ← sympGramClosed_vecMul_eq,
     Matrix.vecMul_vecMul, hGW, Matrix.vecMul_one]
+
+/-- Per-eigenvalue even-falling rule: the ε-twisted row sums of any commuting Penrose
+partner invert the even-falling factorial whenever that **single eigenvalue** is a
+unit — no invertibility of the symplectic Gram itself. Strengthens
+`evenFalling_smul_vecMul_epsVec`; complementary to the exact vanishing
+`vecMul_epsVec_eq_zero` below threshold.
+Blueprint: `thm:symp_even_falling_rule_eigen`. -/
+theorem evenFalling_smul_vecMul_epsVec_of_partner {k : Type*} [CommRing k] {M n : ℕ}
+    {W : Matrix (Pairing n) (Pairing n) k}
+    (hW : IsCommPenrosePartner (sympGramClosed k M n) W)
+    (hu : IsUnit (evenFalling k M n)) :
+    evenFalling k M n • Matrix.vecMul (epsVec k) W = epsVec k :=
+  hW.smul_vecMul_eq_of_vecMul_eq_smul
+    (by rw [sympGramClosed_vecMul_eq, sympGram_mulVec_epsVec]) hu
+
+/-- Per-eigenvalue shifted-rising rule: the ε-twisted determinant sums of any
+commuting Penrose partner invert the shifted rising factorial whenever that single
+eigenvalue is a unit — since `risingShift` never vanishes for `M ≥ 1`, this covers
+the whole singular band `M < n`, where the Gram-level hypothesis of
+`risingShift_smul_vecMul_epsDetVec` is unavailable.
+Blueprint: `thm:symp_rising_shift_rule_eigen`. -/
+theorem risingShift_smul_vecMul_epsDetVec_of_partner {k : Type*} [CommRing k] {M n : ℕ}
+    {W : Matrix (Pairing n) (Pairing n) k}
+    (hW : IsCommPenrosePartner (sympGramClosed k M n) W)
+    (hu : IsUnit (risingShift k M n)) :
+    risingShift k M n • Matrix.vecMul (epsDetVec k) W = epsDetVec k :=
+  hW.smul_vecMul_eq_of_vecMul_eq_smul
+    (by rw [sympGramClosed_vecMul_eq, sympGram_mulVec_epsDetVec]) hu
 
 end Weingarten

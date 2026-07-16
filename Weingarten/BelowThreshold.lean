@@ -10,8 +10,10 @@ import Weingarten.Homs
 
 All statements below are proved and elaborated against Mathlib (`#print axioms`:
 `propext`, `Classical.choice`, `Quot.sound`). Blueprint: `def:alt`, `lem:alt_mul`,
-`thm:gram_singular`, `def:penrose_pair`, `thm:rising_conditional`,
-`thm:falling_conditional`, `thm:vanish_below`, `thm:sign_breakdown`.
+`thm:gram_singular`, `def:ones`, `lem:ones_mul`, `thm:gram_singular_neg`,
+`def:penrose_pair`, `lem:penrose_comm_unique`, `thm:gram_penrose_unique`,
+`thm:rising_conditional`, `thm:falling_conditional`, `thm:vanish_below`,
+`thm:sign_breakdown`.
 
 Below threshold (integer `1 ≤ N < n`) the Gram element is singular, so the Weingarten
 data cannot be its inverse. Instead of defining it (which classically needs
@@ -122,11 +124,109 @@ theorem not_isUnit_gram {n N : ℕ} (_h1 : 1 ≤ N) (h2 : N < n) :
     exact hcard hsgn_alt.symm
   exact hne ((IsUnit.mul_left_eq_zero hu).mp hzero)
 
+/-- The all-ones element `∑ σ, σ` — the augmentation twin of `alt`.
+Blueprint: `def:ones`. -/
+noncomputable def ones (k : Type*) [CommRing k] (n : ℕ) : SymAlg k n :=
+  ∑ σ : Equiv.Perm (Fin n), MonoidAlgebra.of k (Equiv.Perm (Fin n)) σ
+
+/-- Absorption: `ones` soaks up right multiplication into the augmentation — the
+all-ones mirror of `alt_mul`. Blueprint: `lem:ones_mul`. -/
+theorem ones_mul (k : Type*) [CommRing k] (n : ℕ) (x : SymAlg k n) :
+    ones k n * x = aug k n x • ones k n := by
+  have key : ∀ g : Equiv.Perm (Fin n),
+      ones k n * MonoidAlgebra.of k (Equiv.Perm (Fin n)) g = ones k n := by
+    intro g
+    unfold Weingarten.ones
+    rw [Finset.sum_mul]
+    have step : ∀ σ : Equiv.Perm (Fin n),
+        MonoidAlgebra.of k (Equiv.Perm (Fin n)) σ
+            * MonoidAlgebra.of k (Equiv.Perm (Fin n)) g
+          = MonoidAlgebra.of k (Equiv.Perm (Fin n)) (σ * g) :=
+      fun σ => (map_mul (MonoidAlgebra.of k (Equiv.Perm (Fin n))) σ g).symm
+    rw [Finset.sum_congr rfl (fun σ _ => step σ)]
+    exact Fintype.sum_equiv (Equiv.mulRight g)
+      (fun σ => MonoidAlgebra.of k (Equiv.Perm (Fin n)) (σ * g))
+      (fun ρ => MonoidAlgebra.of k (Equiv.Perm (Fin n)) ρ)
+      (fun σ => by simp only [Equiv.coe_mulRight])
+  induction x using MonoidAlgebra.induction_on with
+  | hM m =>
+    rw [key]
+    simp only [aug, MonoidAlgebra.lift_of, MonoidHom.one_apply, one_smul]
+  | hadd x y hx hy => rw [mul_add, map_add, hx, hy, add_smul]
+  | hsmul r x hx => rw [mul_smul_comm, map_smul, hx, smul_assoc]
+
+/-- **Gram singularity at negative integer parameters**: for integer `0 ≤ m ≤ n − 1`
+the Gram element at `N = -m` is not a unit — `ones` is an explicit kernel witness,
+since `ones * gram = (rising factorial at -m) • ones = 0` while `ones ≠ 0` in
+characteristic zero. Together with `not_isUnit_gram` this exhibits the full integer
+singular band `{-(n-1), …, n-1}` of the group-algebra Gram.
+Blueprint: `thm:gram_singular_neg`. -/
+theorem not_isUnit_gram_neg {n m : ℕ} (h : m < n) :
+    ¬ IsUnit (gram ℚ n (-(m : ℚ))) := by
+  intro hu
+  have hzero : ones ℚ n * gram ℚ n (-(m : ℚ)) = 0 := by
+    rw [ones_mul, aug_gram]
+    have hp : (∏ j ∈ Finset.range n, (-(m : ℚ) + (j : ℚ))) = 0 :=
+      Finset.prod_eq_zero (Finset.mem_range.mpr h) (neg_add_cancel _)
+    rw [hp, zero_smul]
+  have haug_ones : aug ℚ n (ones ℚ n)
+      = (Fintype.card (Equiv.Perm (Fin n)) : ℚ) := by
+    rw [ones, map_sum]
+    rw [Finset.sum_congr rfl (g := fun _ => (1 : ℚ)) (fun σ _ => by
+      simp only [aug, MonoidAlgebra.lift_of, MonoidHom.one_apply])]
+    rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_one]
+  have hne : ones ℚ n ≠ 0 := by
+    intro h0
+    rw [h0, map_zero] at haug_ones
+    have hcard : (Fintype.card (Equiv.Perm (Fin n)) : ℚ) ≠ 0 := by
+      simp [Fintype.card_perm, Nat.factorial_ne_zero]
+    exact hcard haug_ones.symm
+  exact hne ((IsUnit.mul_left_eq_zero hu).mp hzero)
+
 /-- Penrose-partner predicate: just the two product identities. The Moore–Penrose
 pseudo-inverse satisfies both; so does the genuine inverse when it exists.
 Blueprint: `def:penrose_pair`. -/
 def IsPenrosePair {k : Type*} [CommRing k] {n : ℕ} (g w : SymAlg k n) : Prop :=
   g * w * g = g ∧ w * g * w = w
+
+/-- **Group-inverse uniqueness at monoid level**: two Penrose partners of the same
+element `g` that both commute with `g` coincide — the standard five-identity chain
+(`w₁ = w₁²g`, `w₂ = g w₂²`, then insert `g = g w₂ g` and `g = g w₁ g` to get
+`w₁ = w₁ w₂ g = w₂`). Associativity only: no inverses, no commutativity of the
+ambient monoid. Blueprint: `lem:penrose_comm_unique`. -/
+theorem penrose_partner_unique {M : Type*} [Monoid M] {g w₁ w₂ : M}
+    (hg₁ : g * w₁ * g = g) (hw₁ : w₁ * g * w₁ = w₁) (hc₁ : w₁ * g = g * w₁)
+    (hg₂ : g * w₂ * g = g) (hw₂ : w₂ * g * w₂ = w₂) (hc₂ : w₂ * g = g * w₂) :
+    w₁ = w₂ := by
+  have e₁ : w₁ = w₁ * w₁ * g := by
+    conv_lhs => rw [← hw₁]
+    rw [mul_assoc, ← hc₁, ← mul_assoc]
+  have e₂ : w₂ = g * (w₂ * w₂) := by
+    conv_lhs => rw [← hw₂]
+    rw [hc₂, mul_assoc]
+  have e₃ : w₁ = w₁ * (w₂ * g) :=
+    calc w₁ = w₁ * w₁ * g := e₁
+      _ = w₁ * w₁ * (g * w₂ * g) := by rw [hg₂]
+      _ = (w₁ * w₁ * g) * (w₂ * g) := by simp only [mul_assoc]
+      _ = w₁ * (w₂ * g) := by rw [← e₁]
+  have e₄ : w₂ = w₁ * (w₂ * g) :=
+    calc w₂ = g * (w₂ * w₂) := e₂
+      _ = (g * w₁ * g) * (w₂ * w₂) := by rw [hg₁]
+      _ = (g * w₁) * (g * (w₂ * w₂)) := by simp only [mul_assoc]
+      _ = (g * w₁) * w₂ := by rw [← e₂]
+      _ = (w₁ * g) * w₂ := by rw [hc₁]
+      _ = w₁ * (w₂ * g) := by rw [mul_assoc, ← hc₂]
+  exact e₃.trans e₄.symm
+
+/-- **Uniqueness of Penrose partners of the Gram element**: the commutation is free
+by centrality (`gram_central`), so any two Penrose partners of `gram k n N`
+coincide — the below-threshold Weingarten data, characterized by the two Penrose
+equations, is canonical whenever it exists. Blueprint: `thm:gram_penrose_unique`. -/
+theorem gram_penrose_partner_unique {k : Type*} [CommRing k] {n : ℕ} {N : k}
+    {w₁ w₂ : SymAlg k n} (h₁ : IsPenrosePair (gram k n N) w₁)
+    (h₂ : IsPenrosePair (gram k n N) w₂) : w₁ = w₂ :=
+  penrose_partner_unique h₁.1 h₁.2 (gram_central k n N w₁).symm.eq
+    h₂.1 h₂.2 (gram_central k n N w₂).symm.eq
 
 /-- **Conditional rising rule, all `N`**: apply `aug` to `G W G = G`.
 Blueprint: `thm:rising_conditional`. -/

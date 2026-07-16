@@ -14,15 +14,22 @@ singularity of the Gram element, with the cell of Chapter~\ref{ch:cell}
 as the certified existence instance. Chapter~\ref{ch:haar} states the
 $\mathrm U(N)$ Haar-integration bridge at the formalized degrees.
 
-Every statement is known mathematics or an elementary corollary of known
-mathematics; the paper proofs are recorded in this blueprint, and the
+Every theorem-class statement is known mathematics or an elementary corollary
+of known mathematics (the five prose remarks carry their own status flags, one
+of them an explicitly marked conjecture); the paper proofs are recorded in this blueprint, and the
 \texttt{scripts/} directory --- driven by \texttt{scripts/verify\_all.py} ---
-independently cross-checks every finite computational theorem in exact rational
-arithmetic, exhaustively over all cases up to a size bound, with the analytic
+cross-checks every finite computational theorem by algorithmically
+independent recomputation in exact rational arithmetic (within this
+repository; not third-party verification),
+exhaustively over all cases up to a size bound, with the analytic
 statements (the $\ell^1$ Neumann invertibility and the \texttt{tsum} expansions)
 exercised through their finite numeric consequences. The deliberate scope
 boundary --- what is and is not formalized, and why --- is recorded in
-Chapter~\ref{ch:boundary}.
+Chapter~\ref{ch:boundary}. The sources of record are public at
+\url{https://github.com/SciSolv/weingarten-lean} (pinned Lean/Mathlib
+toolchain, the verification suites, continuous-integration gates, and
+this blueprint's \LaTeX{} source; the release version is carried by
+\texttt{CITATION.cff}).
 
 Status (current): the unitary spine (parity sign theorem, closed-form
 cancellation ratio, certified $(2,3)$ cell), the certified Penrose pair, and
@@ -91,11 +98,16 @@ mathematics; the Penrose-conditional route of Chapter~\ref{ch:below} is a
 formalization-design choice. For the below-threshold package (12 June
 update): the Penrose characterization is the standard definition of the
 below-threshold Weingarten function (Collins--\'Sniady 2006; Zinn-Justin,
-arXiv:0907.2719); the group-algebra invertibility root set
-$\{0,\dots,n-1\}$ is stated as known by Collins--Matsumoto
-(arXiv:2510.21186), where the sign-twist symmetry
+arXiv:0907.2719); the group-algebra invertibility root set for \emph{nonnegative}
+parameter, $\{0,\dots,n-1\}$, is stated as known by Collins--Matsumoto
+(arXiv:2510.21186, \S3.2), where the sign-twist symmetry
 $\Wg(\sigma,-z)=(-1)^n\sgn(\sigma)\Wg(\sigma,z)$ also appears (invertible
-range); the same paper displays the rising sum rule
+range) --- for an \emph{unrestricted} real or complex parameter $z$ the
+singular set is the full integer band $\{-(n-1),\dots,n-1\}$ (the content
+spectrum $\prod_{(i,j)\in\lambda}(z+j-i)$; already at $n=2$, $z=-1$ the
+element $\delta_e-\delta_{(0\,1)}$ is a zero divisor), so the
+positive-only set printed there implicitly carries the nonnegativity
+qualification made explicit here; the same paper displays the rising sum rule
 (Theorem~\ref{thm:rising}) as classical inside the proof of its
 Lemma~2.2 (present since v1, 24 October 2025) --- a located display of
 known mathematics, altering no attribution here; the exact vanishing of
@@ -218,14 +230,18 @@ for $n+1\le6$ by check~C2 of \texttt{scripts/convention\_checks.py}.
 \leanok
 \uses{def:symAlg, def:cycleCount}
 $\mathcal G_n(N):=\sum_{\sigma\in S_n}N^{c(\sigma)}\,\delta_\sigma
-\in\salg{n}$, for real $N$.
+\in\salg{n}$, for $N$ in an arbitrary commutative coefficient ring $k$
+(the Lean declaration is stated at this generality; the real case of the
+$\ell^1$ chapter is the specialization $k=\R$).
 \end{definition}
 
 \begin{theorem}[Jucys factorization, dual form]\label{thm:jucys}
 \lean{Weingarten.gram_eq_prod}
 \leanok
 \uses{def:gram, def:jm}
-For every real $N$:
+For every $N$ in an arbitrary commutative coefficient ring $k$ (the Lean
+theorem is stated at this generality; all real, rational, and complex
+uses below are specializations):
 \[
 \mathcal G_n(N)=\prod_{i=0}^{n-1}\bigl(N+K_i\bigr),
 \]
@@ -267,8 +283,11 @@ choice, not a claim of new theorems. Indeed the characterization itself is
 the literature's standard definition of the below-threshold Weingarten
 function: following Collins--\'Sniady (\emph{Comm. Math. Phys.}
 \textbf{264} (2006), 773--795), $\Wg$ is conventionally the pseudo-inverse
-of the Gram data, and P.~Zinn-Justin (arXiv:0907.2719) records the
-convention in exactly this two-equation form. The two-line character
+of the Gram data; P.~Zinn-Justin (arXiv:0907.2719) records the
+convention in this two-equation form with a symmetry qualifier (there,
+$\Wg$ is the \emph{symmetric} matrix satisfying the two equations), and
+the bare two-equation form appears in arXiv:0906.4694 (before its
+Theorem~2.1). The two-line character
 evaluations below, their conditional formulation, and the
 alternating-element witness have not been located in print (searches of
 11--12 June 2026; reference request outstanding) and are presumed routine
@@ -338,16 +357,53 @@ By linearity it suffices that $a_n\,\delta_g=\sgn(g)\,a_n$, which is the
 substitution $\rho=\sigma g$ together with multiplicativity of $\sgn$.
 \end{proof}
 
+\begin{definition}[All-ones element]\label{def:ones}
+\lean{Weingarten.ones}
+\leanok
+\uses{def:symAlg}
+$s_n \coloneqq \sum_{\sigma\in S_n}\delta_\sigma\in\salg{n}$ --- the
+augmentation twin of Definition~\ref{def:alt}.
+\end{definition}
+
+\begin{lemma}[Ones absorption]\label{lem:ones_mul}
+\lean{Weingarten.ones_mul}
+\leanok
+\uses{def:ones, lem:hom_coeffsum}
+$s_n\,x = \varepsilon(x)\,s_n$ for every $x\in\salg{n}$: right
+multiplication by a basis element only permutes the summands.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{def:ones}
+Mirror of Lemma~\ref{lem:alt_mul} without signs: reindex by right
+translation, then extend by linearity.
+\end{proof}
+
 \begin{theorem}[Gram singularity below threshold]\label{thm:gram_singular}
 \lean{Weingarten.not_isUnit_gram}
 \leanok
 \uses{lem:alt_mul, lem:gram_eval}
 Over $\mathbb{Q}$, for every integer $1\le N<n$ the Gram element
-$\mathcal G_n(N)$ is not a unit. The statement is known: invertibility of
-$\mathcal G_n(N)$ in the group algebra holds exactly off the integer root
-set $\{0,1,\dots,n-1\}$ (stated as known by Collins--Matsumoto,
-arXiv:2510.21186). The alternating-element proof below is the part we have
-not located in print.
+$\mathcal G_n(N)$ is not a unit. The statement is known: for
+\emph{nonnegative} parameter, invertibility of $\mathcal G_n(N)$ in the
+group algebra holds exactly off the integer root set $\{0,1,\dots,n-1\}$
+(stated as known by Collins--Matsumoto, arXiv:2510.21186, \S3.2). For an
+\emph{unrestricted} real or complex parameter $z$ the singular set is the
+full integer band $\{-(n-1),\dots,n-1\}$: the central character of
+$\mathcal G_n(z)$ on the irreducible indexed by $\lambda\vdash n$ is the
+content product $\prod_{(i,j)\in\lambda}(z+j-i)$, whose roots sweep the
+band (already at $n=2$, $z=-1$ the element
+$\mathcal G_2(-1)=\delta_e-\delta_{(0\,1)}$ is a zero divisor); the
+positive-only set printed in arXiv:2510.21186 therefore carries the same
+nonnegativity qualification adopted here --- its own display~(3.2) and
+sign-twist symmetry confirm the band. The formalized content of this node
+is the singular direction for natural $1\le N<n$; the negative-integer
+companion is Theorem~\ref{thm:gram_singular_neg}, and the invertible
+direction off the band (a character-spectrum fact) is \emph{not}
+formalized in this repository --- the Lean development proves
+invertibility only on the real range $N>n-1$
+(Definition~\ref{def:wgElement}). The alternating-element proof below is
+the part we have not located in print.
 \end{theorem}
 \begin{proof}
 \leanok
@@ -358,6 +414,27 @@ $a_n\neq0$ in characteristic zero; a unit cannot be a right zero divisor.
 (Checks B3, B3b.)
 \end{proof}
 
+\begin{theorem}[Gram singularity at negative integers]\label{thm:gram_singular_neg}
+\lean{Weingarten.not_isUnit_gram_neg}
+\leanok
+\uses{def:ones, lem:ones_mul, lem:gram_eval}
+For integers $0\le m\le n-1$ the Gram element at $N=-m$ is not a unit:
+$s_n\,\mathcal G_n(-m) = \bigl(\textstyle\prod_{j<n}(-m+j)\bigr)s_n = 0$
+while $s_n\ne 0$ in characteristic zero. With
+Theorem~\ref{thm:gram_singular} this exhibits the full integer singular
+band $\{-(n-1),\dots,n-1\}$: the alternating element detects the
+positive-side roots through the signed character, the all-ones element
+detects the negative-side roots through the augmentation.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{def:ones, lem:ones_mul, lem:gram_eval}
+The rising factorial (Lemma~\ref{lem:gram_eval}) vanishes at $-m$ through
+the factor $j=m$; $s_n$ is a zero divisor, so $\mathcal G_n(-m)$ is not
+invertible. (Machine check: the $n=2$ determinant band scan in
+\texttt{verify\_penrose\_eigen.py}.)
+\end{proof}
+
 \begin{definition}[Penrose pair]\label{def:penrose_pair}
 \lean{Weingarten.IsPenrosePair}
 \leanok
@@ -365,13 +442,63 @@ $a_n\neq0$ in characteristic zero; a unit cannot be a right zero divisor.
 $\mathcal W$ is a \emph{Penrose partner} of $\mathcal G$ if
 $\mathcal G\mathcal W\mathcal G=\mathcal G$ and
 $\mathcal W\mathcal G\mathcal W=\mathcal W$. Any Moore--Penrose
-pseudo-inverse qualifies; so does the genuine inverse when it exists.
+pseudo-inverse qualifies; so does the genuine inverse when it exists. In
+a general matrix algebra these two equations define a \emph{reflexive
+generalized inverse} and do not pin down a unique $\mathcal W$; for the
+\emph{central} Gram element they do
+(Theorem~\ref{thm:gram_penrose_unique} below), so the two-equation
+characterization is canonical here whenever it is inhabited.
 This pair of equations is the literature's standard convention for the
 below-threshold Weingarten function (Collins--\'Sniady 2006; recorded in
 this two-equation form by Zinn-Justin, arXiv:0907.2719, and in the
 orthogonal setting in \emph{The orthogonal Weingarten formula in compact
 form}, arXiv:0906.4694).
 \end{definition}
+
+\begin{lemma}[Centrality of the Gram element]\label{lem:gram_central}
+\lean{Weingarten.gram_central}
+\leanok
+\uses{def:gram}
+$\mathcal G_n(N)$ commutes with every element of the group algebra:
+$N^{c(\sigma)}$ is a class function, so both products against a basis
+element reindex to the same sum.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{def:gram}
+$c(\rho g^{-1}) = c(g^{-1}\rho)$ by conjugation invariance of the cycle
+count; extend by linearity.
+\end{proof}
+
+\begin{lemma}[Group-inverse uniqueness]\label{lem:penrose_comm_unique}
+\lean{Weingarten.penrose_partner_unique}
+\leanok
+\uses{def:penrose_pair}
+In any monoid, two Penrose partners of $g$ that both commute with $g$
+coincide.
+\end{lemma}
+\begin{proof}
+\leanok
+$w_1 = w_1^2 g$ and $w_2 = g w_2^2$ from the second Penrose equations
+plus commutation; inserting $g = g w_2 g$ and $g = g w_1 g$ gives
+$w_1 = w_1 w_2 g = w_2$. Associativity only.
+\end{proof}
+
+\begin{theorem}[Canonicity of the Gram's Penrose partner]\label{thm:gram_penrose_unique}
+\lean{Weingarten.gram_penrose_partner_unique}
+\leanok
+\uses{def:penrose_pair, lem:penrose_comm_unique, lem:gram_central}
+Any two Penrose partners of $\mathcal G_n(N)$ coincide: the commutation
+hypothesis is free by centrality (Lemma~\ref{lem:gram_central}), so the
+two-equation characterization of the below-threshold Weingarten data is
+canonical whenever it is inhabited.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:penrose_comm_unique, lem:gram_central}
+Immediate from Lemmas~\ref{lem:penrose_comm_unique}
+and~\ref{lem:gram_central}.
+\end{proof}
 
 \begin{theorem}[Conditional rising rule, all $N$]\label{thm:rising_conditional}
 \lean{Weingarten.sum_wg_of_penrose}
@@ -1475,6 +1602,25 @@ here and holds for the Moore--Penrose inverse of a symmetric matrix and for
 every polynomial-in-$G$ partner.
 \end{definition}
 
+\begin{lemma}[Per-eigenvalue Penrose rule]\label{lem:penrose_eigen}
+\lean{Weingarten.IsCommPenrosePartner.smul_vecMul_eq_of_vecMul_eq_smul}
+\leanok
+\uses{def:comm_penrose}
+Let $W$ be a commuting Penrose partner of $G$ over a commutative ring,
+and let $y^{\mathsf T}G = \lambda\,y^{\mathsf T}$ with $\lambda$ a unit.
+Then $\lambda\,(y^{\mathsf T}W) = y^{\mathsf T}$. No invertibility of $G$
+is assumed: only the single eigenvalue must be a unit.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{def:comm_penrose}
+Multiplying the eigen-row into $GWG=G$ gives
+$\lambda\,(y^{\mathsf T}WG) = \lambda\,y^{\mathsf T}$; cancel the unit
+$\lambda$, then $WG=GW$ turns $y^{\mathsf T}GW$ back into
+$\lambda\,y^{\mathsf T}W$. Division-free: the conclusion is in
+$\lambda$-multiplied form.
+\end{proof}
+
 \begin{lemma}[Two-line evaluation]\label{lem:orth_two_line}
 \lean{Weingarten.vecMul_detVec_two_line}
 \leanok
@@ -1516,8 +1662,16 @@ If $f_n(N)=0$ then $G^{\mathrm O}_n(N)\,v = 0$.
 \lean{Weingarten.not_isUnit_orthGram}
 \leanok
 \uses{thm:orth_ker_witness}
-If $f_n(N)=0$ and $v\ne 0$ then $G^{\mathrm O}_n(N)$ is not invertible;
-the invertibility threshold over the integers is $N\ge n$.
+If $f_n(N)=0$ and $v\ne 0$ then $G^{\mathrm O}_n(N)$ is not invertible.
+In particular, over the \emph{nonnegative} integers the invertibility
+threshold is $N\ge n$: singularity at $0\le N<n$ is this node's
+machine-checked content, while invertibility at integer $N\ge n$ is the
+known spectral endpoint (the zonal spectrum cited in this chapter's
+preamble) and is \emph{not} formalized here. The nonnegativity scoping
+matters: at negative integers the zonal factors
+$\prod_{(i,j)\in\lambda}(N+2j-i-1)$ can be nonzero (already
+$G^{\mathrm O}_2(-1)$ has determinant $-4$ and is invertible over
+$\mathbb Q$), so no unqualified integer threshold statement holds.
 \end{theorem}
 
 \begin{theorem}[Conditional even-rising rule]\label{thm:orth_rising_rule}
@@ -1547,14 +1701,54 @@ invert the falling factorial above threshold, matching the displayed
 Campbell--Yin value.
 \end{theorem}
 
+\begin{theorem}[Per-eigenvalue even-rising rule]\label{thm:orth_rising_rule_eigen}
+\lean{Weingarten.evenRising_smul_vecMul_one_of_partner}
+\leanok
+\uses{lem:penrose_eigen, thm:orth_ones_absorb}
+If $W$ is a commuting Penrose partner of $G^{\mathrm O}_n(N)$ and
+$r_n(N)$ is a unit, then
+$r_n(N)\,\mathbf 1^{\mathsf T}W = \mathbf 1^{\mathsf T}$ --- even where
+the Gram itself is singular (e.g.\ $n=2$, $N=1$). This strengthens
+Theorem~\ref{thm:orth_rising_rule}: full invertibility of the Gram is
+replaced by the single relevant eigenvalue.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:penrose_eigen, thm:orth_ones_absorb}
+Lemma~\ref{lem:penrose_eigen} with the eigen-row
+$\mathbf 1^{\mathsf T}G = r_n(N)\,\mathbf 1^{\mathsf T}$
+(Theorem~\ref{thm:orth_ones_absorb} plus symmetry). (Machine check:
+\texttt{verify\_penrose\_eigen.py} at the singular cell $n=2$, $N=1$.)
+\end{proof}
+
+\begin{theorem}[Per-eigenvalue falling rule]\label{thm:orth_falling_rule_eigen}
+\lean{Weingarten.fallingFact_smul_vecMul_detVec_of_partner}
+\leanok
+\uses{lem:penrose_eigen, thm:orth_det_absorb}
+Under the same partner hypothesis, if $f_n(N)$ is a unit then
+$f_n(N)\,v^{\mathsf T}W = v^{\mathsf T}$ --- complementary to the exact
+vanishing of Theorem~\ref{thm:orth_det_vanish} when $f_n(N)=0$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:penrose_eigen, thm:orth_det_absorb}
+Lemma~\ref{lem:penrose_eigen} with the eigen-row of
+Theorem~\ref{thm:orth_det_absorb}.
+\end{proof}
+
 \begin{remark}[Integral reading]\label{rem:orth_integral}
 \uses{thm:orth_det_vanish}
-For Haar $O\in\mathrm O(N)$ and $A$ the top-left $n\times n$ corner,
+For Haar $O\in\mathrm O(N)$ with $N\ge n$ and $A$ the top-left
+$n\times n$ corner,
 $E[(\det A)^2] = n!\,\bigl(v^{\mathsf T}\mathrm{Wg}\bigr)_{q_{\mathrm{id}}}
-= n!/f_n(N)$ above threshold; below threshold the corner has rank
-$\le N<n$, the determinant vanishes pointwise, and
+= n!/f_n(N)$ above threshold. Below threshold ($N<n$) no $n\times n$
+corner of an $N\times N$ matrix exists; the surviving object is the
+$n\times n$ array $A_{ab}:=O_{\iota(a)\iota(b)}$ built from index maps
+$\iota:[n]\to[N]$ --- any such array has a repeated row, so
+$\bigwedge^n\mathbb R^N=0$ forces $\det A=0$ pointwise --- and
 Theorem~\ref{thm:orth_det_vanish} is exactly the Weingarten shadow of that
-rank deficiency. The \emph{orthogonal} Haar moment formula itself remains out
+rank deficiency (the same nonexistence-of-the-corner convention as
+Remark~\ref{rem:symp_integral}). The \emph{orthogonal} Haar moment formula itself remains out
 of Lean scope (Chapter~\ref{ch:boundary}): the machine-checked Haar
 bridge (Chapter~\ref{ch:haar}) now
 in-repo under \texttt{Weingarten/Haar/} covers $\mathrm U(N)$ at the formalized
@@ -1887,8 +2081,15 @@ $\varepsilon$ vector is an explicit kernel vector.
 \lean{Weingarten.not_isUnit_sympGram}
 \leanok
 \uses{thm:symp_ker_witness}
-For integers $M<n$ the symplectic Gram is not invertible (over any
-nontrivial ring); the invertibility threshold is $M\ge n$.
+For natural numbers $M<n$ the symplectic Gram is not invertible (over any
+nontrivial ring). In particular, over the \emph{nonnegative} integers the
+invertibility threshold is $M\ge n$: singularity at $0\le M<n$ is this
+node's machine-checked content, while invertibility at integer $M\ge n$
+is the known spectral endpoint (via the twisted spectrum cited in this
+chapter's preamble) and is \emph{not} formalized here. As in
+Theorem~\ref{thm:orth_not_unit}, the nonnegativity scoping is essential
+--- the closed form at negative $M$ reduces to the orthogonal Gram at
+$-2M>0$, which is generically invertible.
 \end{theorem}
 
 \begin{theorem}[Exact vanishing below threshold]\label{thm:symp_vanish_below}
@@ -1918,6 +2119,42 @@ Under the same hypotheses, $s_n(M)\,(\varepsilon\odot v)^{\mathsf T}W
 = (\varepsilon\odot v)^{\mathsf T}$ --- the never-vanishing side of the
 role swap.
 \end{theorem}
+
+\begin{theorem}[Per-eigenvalue even-falling rule]\label{thm:symp_even_falling_rule_eigen}
+\lean{Weingarten.evenFalling_smul_vecMul_epsVec_of_partner}
+\leanok
+\uses{lem:penrose_eigen, thm:symp_eps_ones_absorb}
+If $W$ is a commuting Penrose partner of the symplectic Gram and the
+even-falling factorial $e_n(M)$ is a unit, then
+$e_n(M)\,\varepsilon^{\mathsf T}W = \varepsilon^{\mathsf T}$ --- the
+per-eigenvalue strengthening of
+Theorem~\ref{thm:symp_even_falling_rule}, with no invertibility of the
+Gram assumed.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:penrose_eigen, thm:symp_eps_ones_absorb}
+Lemma~\ref{lem:penrose_eigen} with
+Theorem~\ref{thm:symp_eps_ones_absorb}.
+\end{proof}
+
+\begin{theorem}[Per-eigenvalue shifted-rising rule]\label{thm:symp_rising_shift_rule_eigen}
+\lean{Weingarten.risingShift_smul_vecMul_epsDetVec_of_partner}
+\leanok
+\uses{lem:penrose_eigen, thm:symp_eps_det_absorb}
+If the shifted rising factorial $s_n(M)=2M(2M+1)\cdots(2M+n-1)$ is a
+unit --- for $M\ge 1$ over $\mathbb Q$ this holds at \emph{every} cell,
+including the whole singular band $M<n$ --- then
+$s_n(M)\,(\varepsilon\odot v)^{\mathsf T}W
+= (\varepsilon\odot v)^{\mathsf T}$: the per-eigenvalue strengthening of
+Theorem~\ref{thm:symp_rising_shift_rule}.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:penrose_eigen, thm:symp_eps_det_absorb}
+Lemma~\ref{lem:penrose_eigen} with
+Theorem~\ref{thm:symp_eps_det_absorb}.
+\end{proof}
 
 \begin{remark}[Integral reading: expected Pfaffians of skew compressions]\label{rem:symp_integral}
 \uses{thm:symp_vanish_below}
@@ -1969,7 +2206,7 @@ Throughout, $G=\mathrm U(N)$ is the unitary group of
 $N\times N$ complex matrices and $E$ denotes an expectation on the
 continuous observables $C(G,\mathbb C)$.
 
-\section{The abstract Haar state}
+\section{The abstract Haar expectation}
 
 \begin{definition}[Haar expectation interface]\label{def:haar_state}
 \lean{Weingarten.Haar.HaarExpectation}
@@ -1978,10 +2215,19 @@ A \emph{Haar expectation} on $\mathrm U(N)$ is a $\mathbb C$-linear
 functional $E\colon C(\mathrm U(N),\mathbb C)\to\mathbb C$ with
 $E[1]=1$ that is invariant under both translation actions on the
 argument: $E[f(g\,\cdot)]=E[f]=E[f(\cdot\,g)]$ for every unitary $g$
-(Banica--Collins, Def.~4.1). The domain restriction to
-\emph{continuous} observables is load-bearing: the same interface on
-all functions $\mathrm U(N)\to\mathbb C$ is provably uninhabited (a
-coboundary/orbit argument, recorded with the definition).
+(cf.\ Banica--Collins, Def.~4.1, whose Haar functional is additionally
+\emph{positive}; positivity is deliberately omitted from this
+interface, so every Haar state in their sense restricts to a Haar
+expectation, and integration against the constructed Haar probability
+measure of Section~\ref{sec:haar_construction} provides a positive
+instance --- the moment theorems below consume only linearity,
+normalization, and bi-invariance). The domain restriction to
+\emph{continuous} observables is load-bearing: for $N\ge1$ the same
+interface on all functions $\mathrm U(N)\to\mathbb C$ is uninhabited
+(a coboundary/orbit argument, recorded as a documented argument with
+the definition, \emph{not} formalized); at $N=0$ the group is a single
+point and evaluation inhabits even the all-functions interface
+(\texttt{haarExpectationZero}).
 \end{definition}
 
 \begin{lemma}[Charge kill]\label{lem:charge_kill}
@@ -2191,11 +2437,16 @@ coefficients $w_{0},\dots,w_{4}$. For $N\geq2$:
 \[
 w_{1}=\tfrac12,\qquad w_{2}=w_{3}=w_{4}=0,
 \]
-i.e.\ $\langle\operatorname{Tr}U\rangle_{\beta}=\beta/2+O(\beta^{5})$
+equivalently the truncated quotient is $\beta/2\pmod{\beta^{5}}$
 --- exact finite-$N$ mock-Gaussianity (at $N=1$, $w_{3}=-1/16$).
-The companion expansion gives
-$\langle|\operatorname{Tr}U|^{2}\rangle_{\beta}
-=1+\beta^{2}/4+O(\beta^{4})$.
+The companion expansion gives truncated quotient
+$1+\beta^{2}/4\pmod{\beta^{4}}$. (The analytic readings
+$\langle\operatorname{Tr}U\rangle_{\beta}=\beta/2+O(\beta^{5})$ and
+$\langle|\operatorname{Tr}U|^{2}\rangle_{\beta}=1+\beta^{2}/4
++O(\beta^{4})$ are prose glosses of these formalized coefficient
+identities: the machine-checked content is the finite truncated
+quotient, and the Taylor-remainder bridge to the actual integral
+quotient is \emph{not} formalized here.)
 \end{theorem}
 \begin{proof}
 \leanok
@@ -2310,10 +2561,12 @@ Theorem~\ref{thm:entry_integral}.
 For real $N>1$:
 \[
 \Wg(e,N)=\frac1{N^{2}-1},\qquad
-\Wg\bigl((1\,2),N\bigr)=-\frac1{N(N^{2}-1)}
+\Wg\bigl(\swap{0}{1},N\bigr)=-\frac1{N(N^{2}-1)}
 \]
 --- matching the fourth-moment table of
-Theorem~\ref{thm:fourth_moments}.
+Theorem~\ref{thm:fourth_moments} (the transposition is written in the
+standing $0$-indexed convention; textbook sources print it as
+$(1\,2)$).
 \end{theorem}
 \begin{proof}
 \leanok
@@ -2322,7 +2575,7 @@ Solve the $2\times2$ linear system formed by the rising and falling
 sum rules over $S_{2}$ --- no characters and no matrix inversion
 (the identity value is \texttt{wg\_two\_one}; the transposition value
 is the sibling \texttt{wg\_two\_swap}). Committed cross-checks: the Collins--\'Sniady identity
-$2\Wg(e)+2\Wg((1\,2))=2/(N(N+1))$, sign consistency with the parity
+$2\Wg(e)+2\Wg(\swap{0}{1})=2/(N(N+1))$, sign consistency with the parity
 theorem, and a numeric spot check at $N=3$.
 \end{proof}
 
@@ -2426,7 +2679,7 @@ identifiers are given as the canonical, checkable anchor.
 \item C.~E.~I. Redelmeier, \emph{Explicit multi-matrix topological expansion for quaternionic random matrices}, arXiv:1412.0646.
 \item D.~Weingarten, \emph{Asymptotic behavior of group integrals in the limit of infinite rank}, J.\ Math.\ Phys.\ \textbf{19} (1978), 999--1001.
 \item P.~Zinn-Justin, \emph{Jucys--Murphy elements and Weingarten matrices}, Lett.\ Math.\ Phys.\ \textbf{91} (2010); arXiv:0907.2719.
-\item T.~Banica and B.~Collins, \emph{Integration over compact quantum groups}, arXiv:math/0511253. (Def.~4.1: the bi-invariant Haar state --- the expectation interface of Chapter~\ref{ch:haar}.)
+\item T.~Banica and B.~Collins, \emph{Integration over compact quantum groups}, arXiv:math/0511253. (Def.~4.1: the \emph{positive} bi-invariant Haar functional; the expectation interface of Chapter~\ref{ch:haar} keeps its linearity, normalization, and bi-invariance and deliberately omits the positivity --- every Haar state in their sense restricts to an instance.)
 \item P.~Diaconis and M.~Shahshahani, \emph{On the eigenvalues of random matrices}, J.\ Appl.\ Probab.\ \textbf{31A} (1994), 49--62. (Priority for the trace moments; cited with the range condition that Diaconis--Evans corrects.)
 \item P.~Diaconis and S.~N.~Evans, \emph{Linear functionals of eigenvalues of random matrices}, Trans.\ Amer.\ Math.\ Soc.\ \textbf{353} (2001), 2615--2633. (Thm~2.1(a): the sharp range for the joint trace moments.)
 \item E.~M.~Rains, \emph{Increasing subsequences and the classical groups}, Electron.\ J.\ Combin.\ \textbf{5} (1998), \#R12. (Exact $E|\mathrm{Tr}\,U|^{2n}$ as LIS counts, at every $N$.)

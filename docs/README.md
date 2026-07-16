@@ -7,7 +7,7 @@ site. The source of truth is `blueprint/src/content.tex`; these are generated fr
 - **[blueprint.pdf](blueprint.pdf)** — the full blueprint: paper proofs, definitions,
   and the per-node Lean correspondence, compiled from `blueprint/src/`.
 - **[dependency_graph.pdf](dependency_graph.pdf)** — the theorem dependency graph
-  (121 nodes, 219 edges), laid out by longest-path depth. The PDF is vector — zoom
+  (132 nodes, 239 edges), laid out by longest-path depth. The PDF is vector — zoom
   for the node labels. A raster preview is below.
 
 Node **fill** encodes the kind (theorem / proposition / lemma / corollary, definition,
@@ -33,5 +33,7 @@ python scripts/gen_dep_graph.py
 
 The interactive web blueprint — with the live, clickable dependency graph — is the
 eventual **GitHub Pages** target; the `blueprint/src/` sources are kept ready for it. (The committed
-`.github/workflows/blueprint.yml` currently runs a build-only check;
-Pages deployment is deliberately not enabled yet.)
+`.github/workflows/blueprint.yml` gates every push on the kernel build, the axiom
+audit (`scripts/AxiomsAudit.lean`), and the exact-arithmetic suites
+(`scripts/verify_all.py`); blueprint regeneration and Pages deployment are
+deliberately not part of CI.)

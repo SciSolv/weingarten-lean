@@ -11,7 +11,7 @@ import Weingarten.CycleCount
 
 The factorization `gram_eq_prod` is proved over any commutative ring and any `N`
 (`#print axioms` gives only `propext`, `Classical.choice`, `Quot.sound`).
-Blueprint: `def:gram`, `thm:jucys`.
+Blueprint: `def:gram`, `thm:jucys`, `lem:gram_central`.
 
 `gram k n N = ∑ σ, N ^ cycleCount σ • σ` collects the Gram data of the
 Haar-orthogonality pairing, over an arbitrary commutative ring `k`. The keystone is the
@@ -244,5 +244,48 @@ theorem iotaHom_swap (n : ℕ) (i j : Fin n) :
       (Fin.succ_ne_zero i).symm (Fin.succ_ne_zero j).symm]
   · rw [decomposeFin_symm_apply_succ, Equiv.swap_self, Equiv.refl_apply,
       ← (Fin.succ_injective n).map_swap]
+
+/-- **Centrality of the Gram element**: `cycleCount` is a class function
+(`cycleCount_conj`), so `gram k n N` commutes with every element of the group
+algebra. On a basis element `g` both products reindex to `∑ ρ, N ^ c(ρ) • ρ`-shaped
+sums whose exponents `c(ρ g⁻¹)` and `c(g⁻¹ ρ)` agree by conjugation invariance.
+This supplies, for free, the commutation hypothesis of Penrose-partner uniqueness
+(`gram_penrose_partner_unique` in `Weingarten.BelowThreshold`).
+Blueprint: `lem:gram_central`. -/
+theorem gram_central (k : Type*) [CommRing k] (n : ℕ) (N : k) (x : SymAlg k n) :
+    Commute (gram k n N) x := by
+  have key : ∀ g : Equiv.Perm (Fin n),
+      gram k n N * MonoidAlgebra.of k (Equiv.Perm (Fin n)) g
+        = MonoidAlgebra.of k (Equiv.Perm (Fin n)) g * gram k n N := by
+    intro g
+    unfold Weingarten.gram
+    rw [Finset.sum_mul, Finset.mul_sum]
+    have stepR : ∀ σ : Equiv.Perm (Fin n),
+        (N ^ cycleCount n σ • MonoidAlgebra.of k (Equiv.Perm (Fin n)) σ)
+            * MonoidAlgebra.of k (Equiv.Perm (Fin n)) g
+          = N ^ cycleCount n σ • MonoidAlgebra.of k (Equiv.Perm (Fin n)) (σ * g) := by
+      intro σ
+      rw [smul_mul_assoc, ← map_mul]
+    have stepL : ∀ σ : Equiv.Perm (Fin n),
+        MonoidAlgebra.of k (Equiv.Perm (Fin n)) g
+            * (N ^ cycleCount n σ • MonoidAlgebra.of k (Equiv.Perm (Fin n)) σ)
+          = N ^ cycleCount n σ • MonoidAlgebra.of k (Equiv.Perm (Fin n)) (g * σ) := by
+      intro σ
+      rw [mul_smul_comm, ← map_mul]
+    rw [Finset.sum_congr rfl (fun σ _ => stepR σ),
+      Finset.sum_congr rfl (fun σ _ => stepL σ)]
+    rw [← Equiv.sum_comp (Equiv.mulRight g⁻¹)
+        (fun ρ => N ^ cycleCount n ρ • MonoidAlgebra.of k (Equiv.Perm (Fin n)) (ρ * g)),
+      ← Equiv.sum_comp (Equiv.mulLeft g⁻¹)
+        (fun ρ => N ^ cycleCount n ρ • MonoidAlgebra.of k (Equiv.Perm (Fin n)) (g * ρ))]
+    simp only [Equiv.coe_mulRight, Equiv.coe_mulLeft, inv_mul_cancel_right,
+      mul_inv_cancel_left]
+    refine Finset.sum_congr rfl (fun ρ _ => ?_)
+    have h1 : g⁻¹ * ρ = g⁻¹ * (ρ * g⁻¹) * (g⁻¹)⁻¹ := by group
+    rw [h1, cycleCount_conj]
+  induction x using MonoidAlgebra.induction_on with
+  | hM m => exact key m
+  | hadd x y hx hy => exact hx.add_right hy
+  | hsmul r x hx => exact hx.smul_right r
 
 end Weingarten

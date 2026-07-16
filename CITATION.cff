@@ -5,8 +5,8 @@ type: software
 authors:
   - family-names: West
     given-names: Daniel G.
-version: "2.1.0"
-date-released: "2026-07-15"
+version: "2.2.0"
+date-released: "2026-07-16"
 license: Apache-2.0
 repository-code: "https://github.com/SciSolv/weingarten-lean"
 keywords:

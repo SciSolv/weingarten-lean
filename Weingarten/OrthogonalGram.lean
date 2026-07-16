@@ -14,9 +14,10 @@ Fully elaborated and `sorry`-free (`lake env lean` on this file is EXIT 0 with n
 `sorry` warnings; `#print axioms` of every declaration gives only `propext`,
 `Classical.choice`, `Quot.sound` — no `native_decide`). Blueprint: `def:orth_gram`,
 `def:even_rising`, `def:falling_fact`, `thm:orth_ones_absorb`,
-`thm:orth_det_absorb`, `def:comm_penrose`, `lem:orth_two_line`,
-`thm:orth_det_vanish`, `thm:orth_ker_witness`, `thm:orth_not_unit`,
-`thm:orth_rising_rule`, `thm:orth_falling_rule`.
+`thm:orth_det_absorb`, `def:comm_penrose`, `lem:penrose_eigen`,
+`lem:orth_two_line`, `thm:orth_det_vanish`, `thm:orth_ker_witness`,
+`thm:orth_not_unit`, `thm:orth_rising_rule`, `thm:orth_falling_rule`,
+`thm:orth_rising_rule_eigen`, `thm:orth_falling_rule_eigen`.
 
 The orthogonal Gram matrix `N ^ loops` on pair partitions; the all-ones and
 determinant-vector absorption identities (even-rising and plain falling
@@ -1181,6 +1182,32 @@ theorem IsCommPenrosePartner.mul_eq_one_of_isUnit {ι : Type*} [Fintype ι] [Dec
       rw [← mul_assoc, h.gwg, mul_one])
   exact mul_eq_one_comm.mp hwg
 
+/-- **Generic per-eigenvalue Penrose rule** (division-free `λ`-smul form): against a
+commuting Penrose partner, a left eigen-row of `G` whose eigenvalue is a unit
+reproduces itself with one extra factor of `W` — no invertibility of `G` itself.
+From `y G W G = y G` the eigen-row hypothesis gives `lam • (y W G) = lam • y`;
+cancelling the unit `lam` and commuting `W G = G W` turns the leftover `G` back into
+`lam`. This strengthens the four conditional sum rules to singular-Gram parameters:
+only the single eigenvalue must be a unit. Blueprint: `lem:penrose_eigen`. -/
+theorem IsCommPenrosePartner.smul_vecMul_eq_of_vecMul_eq_smul {ι : Type*} [Fintype ι]
+    [DecidableEq ι] {G W : Matrix ι ι k} (h : IsCommPenrosePartner G W) {lam : k}
+    {y : ι → k} (hy : Matrix.vecMul y G = lam • y) (hlam : IsUnit lam) :
+    lam • Matrix.vecMul y W = y := by
+  have hwg : Matrix.vecMul y (W * G) = y := by
+    refine hlam.smul_left_cancel.mp ?_
+    calc lam • Matrix.vecMul y (W * G)
+        = Matrix.vecMul (lam • y) (W * G) := (Matrix.smul_vecMul lam y (W * G)).symm
+      _ = Matrix.vecMul (Matrix.vecMul y G) (W * G) := by rw [hy]
+      _ = Matrix.vecMul y (G * (W * G)) := Matrix.vecMul_vecMul y G (W * G)
+      _ = Matrix.vecMul y G := by rw [← mul_assoc, h.gwg]
+      _ = lam • y := hy
+  calc lam • Matrix.vecMul y W
+      = Matrix.vecMul (lam • y) W := (Matrix.smul_vecMul lam y W).symm
+    _ = Matrix.vecMul (Matrix.vecMul y G) W := by rw [hy]
+    _ = Matrix.vecMul y (G * W) := Matrix.vecMul_vecMul y G W
+    _ = Matrix.vecMul y (W * G) := by rw [h.comm]
+    _ = y := hwg
+
 /-- The two-line evaluation: against a commuting Penrose partner, the
 determinant covector reproduces itself with one extra factor of `W`.
 Blueprint: `lem:orth_two_line`. -/
@@ -1266,5 +1293,32 @@ theorem fallingFact_smul_vecMul_detVec {N : k}
   have hGW : orthGram k n N * W = 1 := h.mul_eq_one_of_isUnit hu
   rw [← Matrix.smul_vecMul, ← orthGram_mulVec_detVec, ← orthGram_vecMul_eq,
     Matrix.vecMul_vecMul, hGW, Matrix.vecMul_one]
+
+/-- Per-eigenvalue even-rising rule: the row sums of any commuting Penrose partner
+invert the even-rising factorial whenever that **single eigenvalue** is a unit — no
+invertibility of the Gram itself, so the rule also covers the singular band (e.g.
+`n = 2`, `N = 1`, where the falling factorial vanishes but `evenRising = 3` is a unit
+over `ℚ`). Strengthens `evenRising_smul_vecMul_one`.
+Blueprint: `thm:orth_rising_rule_eigen`. -/
+theorem evenRising_smul_vecMul_one_of_partner {N : k}
+    {W : Matrix (Pairing n) (Pairing n) k}
+    (h : IsCommPenrosePartner (orthGram k n N) W)
+    (hu : IsUnit (evenRising k n N)) :
+    evenRising k n N • Matrix.vecMul 1 W = 1 :=
+  h.smul_vecMul_eq_of_vecMul_eq_smul
+    (by rw [orthGram_vecMul_eq, orthGram_mulVec_one]) hu
+
+/-- Per-eigenvalue falling rule: the signed determinant sums of any commuting Penrose
+partner invert the falling factorial whenever that single eigenvalue is a unit.
+Strengthens `fallingFact_smul_vecMul_detVec`; complementary to the exact vanishing
+`vecMul_detVec_eq_zero` when the falling factorial is zero.
+Blueprint: `thm:orth_falling_rule_eigen`. -/
+theorem fallingFact_smul_vecMul_detVec_of_partner {N : k}
+    {W : Matrix (Pairing n) (Pairing n) k}
+    (h : IsCommPenrosePartner (orthGram k n N) W)
+    (hu : IsUnit (fallingFact k n N)) :
+    fallingFact k n N • Matrix.vecMul (detVec k) W = detVec k :=
+  h.smul_vecMul_eq_of_vecMul_eq_smul
+    (by rw [orthGram_vecMul_eq, orthGram_mulVec_detVec]) hu
 
 end Weingarten

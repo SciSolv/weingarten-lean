@@ -57,6 +57,32 @@ Each `verify_<package>.py` prints one `PASS <theorem>` line per theorem below.
 | `eps_det_absorb` | ε-twisted determinant absorption = shifted-rising `2M(2M+1)…(2M+n−1)` | `n=1,2,3` | PASS |
 | `qStar_sign` | `crossings(qStar) ≡ crossings(q)+1+flipExp (mod 2)`, both counted independently | Pairing(n+1), `2(n+1)=2,4,6` | PASS |
 
+## Per-eigenvalue Penrose rules — `verify_penrose_eigen.py`
+
+The per-eigenvalue rules replace `IsUnit (Gram)` by `IsUnit (single eigenvalue)`,
+so they are exercised at a **genuinely singular** cell — the orthogonal `n = 2`,
+`N = 1` Gram, which is the all-ones `3×3` matrix (det `= 0`; the older
+IsUnit-Gram rules are unavailable there). The partner side is the hand-written
+Moore–Penrose closed form `W = J/9`; the Gram side is rebuilt from pair
+partitions with union-find loops. None of the checks compares a value to itself.
+
+| Theorem (Lean / blueprint) | Independent check | Bound | Status |
+|---|---|---|---|
+| `penrose_eigen` (`IsCommPenrosePartner.smul_vecMul_eq_of_vecMul_eq_smul`, lem:penrose_eigen) | union-find Gram at `n=2, N=1` = hand-written `J`; `W = J/9` satisfies `GWG=G`, `WGW=W`, `WG=GW` exactly while `det G = 0` | `n=2`, `N=1` (the singular cell) | PASS |
+| `orth_rising_rule_eigen` (`evenRising_smul_vecMul_one_of_partner`) | `𝟙ᵀG = r_2(1)·𝟙ᵀ` by brute product; every row sum of `W` is `1/3 = 1/r_2(1)`, `r_2` built as `∏(N+2j)` | `n=2`, `N=1` | PASS |
+| `orth_det_vanish` complement (`vecMul_detVec_eq_zero`) | `f_2(1) = 0` (the eigenvalue is NOT a unit) and `vᵀW = 0` exactly for the alternating covector | `n=2`, `N=1` | PASS |
+| `gram_singular_neg` band (`not_isUnit_gram_neg` + `not_isUnit_gram`) | unitary `n=2` Gram entries rebuilt from `cycleCount` over `S_2`; brute `2×2` cofactor det vs. closed `N(N+1)·N(N−1)`; det vanishes **exactly** at `N ∈ {−1,0,1}` | integers `N ∈ [−10,10]` | PASS |
+
+The remaining new Lean theorems in this batch are structural, with no finite
+numeric content to enumerate: `gram_central` (a class-function reindexing),
+`penrose_partner_unique` / `gram_penrose_partner_unique` (a monoid identity
+chain), `ones_mul` (the augmentation mirror of `alt_mul`; its numeric shadow —
+row sums = rising factorial — is already exercised by `rising_sum` above, and
+the negative-parameter vanishing is the `N = −1` point of the `unitary_band`
+scan), and the symplectic per-eigenvalue twins (`evenFalling_…_of_partner`,
+`risingShift_…_of_partner`), whose absorption content is pinned by
+`eps_ones_absorb` / `eps_det_absorb` in the symplectic suite.
+
 ## Haar bridge — `Weingarten/Haar/`
 
 **Provenance.** The authoritative copy of this layer lives in this

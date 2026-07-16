@@ -11,7 +11,7 @@ up to a size bound.
 
   python scripts/verify_all.py
 
-The four verify_<package>.py suites print one `PASS <theorem>` line per formalized
+The five verify_<package>.py suites print one `PASS <theorem>` line per formalized
 theorem (see scripts/VERIFICATION.md for the per-theorem ledger). The remaining
 suites are the original convention- and proof-step cross-checks. This runner
 executes them all under the current interpreter and exits 0 iff every suite
@@ -31,6 +31,7 @@ ORDER = [
     "verify_below.py",
     "verify_orthogonal.py",
     "verify_symplectic.py",
+    "verify_penrose_eigen.py",
     "convention_checks.py",
     "absorption_proof_checks.py",
     "crossing_sign_proof_checks.py",

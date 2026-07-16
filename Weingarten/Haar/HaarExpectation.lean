@@ -83,13 +83,13 @@ namespace Weingarten.Haar
 on the algebra of continuous observables `C(Matrix.unitaryGroup (Fin N) ℂ, ℂ)` that is
 normalized and invariant under left and right translation.
 
-This is the Haar state in the sense of Banica–Collins, arXiv:math/0511253, Def. 4.1
+Every Haar state in the sense of Banica–Collins, arXiv:math/0511253, Def. 4.1
 (PDF-verified) — a bi-invariant unital linear functional on the function algebra
-`C(G)` — specialized to the classical group `U(N)`; the three fields are exactly the
-hypotheses consumed by the moment computations of Collins–Śniady, arXiv:math-ph/0402073,
-Prop. 2.2 (PDF-verified). Positivity is deliberately omitted, and the domain is
-`C(G, ℂ)` rather than all functions: the all-functions variant is provably uninhabited —
-see the module docstring. -/
+`C(G)` — yields such a functional when specialized to the classical group `U(N)`;
+the three fields are exactly the hypotheses consumed by the moment computations of
+Collins–Śniady, arXiv:math-ph/0402073, Prop. 2.2 (PDF-verified). Positivity is
+deliberately omitted, and the domain is `C(G, ℂ)` rather than all functions: the
+all-functions variant is provably uninhabited — see the module docstring. -/
 structure HaarExpectation (N : ℕ) where
   /-- The underlying ℂ-linear expectation functional on continuous observables. -/
   toFun : C(Matrix.unitaryGroup (Fin N) ℂ, ℂ) →ₗ[ℂ] ℂ
