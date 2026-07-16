@@ -1,0 +1,19 @@
+name = "weingarten"
+defaultTargets = ["Weingarten"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+[[require]]
+name = "checkdecls"
+git = "https://github.com/PatrickMassot/checkdecls.git"
+
+# To build API docs locally/in CI, uncomment (matches `leanblueprint new` doc-gen step):
+# [[require]]
+# name = "«doc-gen4»"
+# git = "https://github.com/leanprover/doc-gen4"
+# rev = "main"
+
+[[lean_lib]]
+name = "Weingarten"

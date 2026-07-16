@@ -1,0 +1,46 @@
+cff-version: 1.2.0
+message: "If you use this software or blueprint, please cite it as below."
+title: "weingarten-lean: a machine-checked Lean 4 formalization of Weingarten calculus (unitary, orthogonal, and symplectic)"
+type: software
+authors:
+  - family-names: West
+    given-names: Daniel G.
+version: "2.1.0"
+date-released: "2026-07-15"
+license: Apache-2.0
+repository-code: "https://github.com/SciSolv/weingarten-lean"
+keywords:
+  - Lean 4
+  - Mathlib
+  - formalization
+  - Weingarten calculus
+  - Jucys-Murphy elements
+  - symmetric group algebra
+  - orthogonal group
+  - symplectic group
+  - Brauer algebra
+  - pair partitions
+  - Haar measure
+  - unitary matrix integrals
+abstract: >-
+  A complete, machine-checked Lean 4 + Mathlib formalization of the elementary
+  algebraic layer of Weingarten calculus across the three classical series —
+  unitary U(N), orthogonal O(N), and symplectic Sp(N). It covers the
+  Jucys-Murphy factorization of the Gram element, l1/Neumann invertibility in the
+  stable range, the rising and falling sum rules, the strict parity sign theorem
+  and its breakdown below threshold, the cancellation-ratio closed form, a
+  character-theory-free (Penrose-conditional) below-threshold package with exact
+  vanishing of the signed sums, the orthogonal and symplectic (Brauer)
+  extensions: the N^loops Gram on pair partitions, the all-ones and alternating
+  absorption identities, the crossing-sign factorization of the symplectic
+  Gram, and the U(N) Haar-integration bridge at the formalized
+  degrees: a Haar expectation on U(N) constructed for all N from Mathlib's
+  Haar measure, the n=1 and n=2 entry-integral tables, E|Tr U|^2 = 1 and
+  E|Tr U|^4 = 2, and the one-matrix-model coefficients w1 = 1/2,
+  w2 = w3 = w4 = 0 (N >= 2); the general-n Collins-Sniady moment formula
+  remains out of scope. The development is sorry-free and axiom-clean (#print axioms reports only
+  propext, Classical.choice, Quot.sound; no native_decide), and every finite
+  computational theorem is independently cross-checked --- exhaustively over all
+  cases up to a size bound --- by exact-arithmetic scripts (entry point
+  scripts/verify_all.py), with the analytic statements exercised through their
+  finite numeric consequences.

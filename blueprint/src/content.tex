@@ -1,0 +1,2441 @@
+\chapter{Introduction and scope}\label{ch:intro}
+
+This blueprint specifies a Lean~4 / Mathlib formalization of the
+\emph{stable-range Weingarten package}: the Jucys factorization of the Gram
+element of the symmetric-group algebra; its invertibility for real $N$ with
+$n-1<N$ via an $\ell^1$ Neumann series; the rising and falling sum rules;
+the strict parity sign theorem; the exact closed form for the cancellation
+ratio; and a certified below-threshold cell at $(N,n)=(2,3)$. A
+below-threshold package (Chapter~\ref{ch:below}) states both sum rules
+\emph{conditionally on the Penrose equations} --- hence at every $N$, with
+no character theory --- including the exact vanishing of the signed sum
+for integer $1\le N<n$, the forced breakdown of the sign pattern, and the
+singularity of the Gram element, with the cell of Chapter~\ref{ch:cell}
+as the certified existence instance. Chapter~\ref{ch:haar} states the
+$\mathrm U(N)$ Haar-integration bridge at the formalized degrees.
+
+Every statement is known mathematics or an elementary corollary of known
+mathematics; the paper proofs are recorded in this blueprint, and the
+\texttt{scripts/} directory --- driven by \texttt{scripts/verify\_all.py} ---
+independently cross-checks every finite computational theorem in exact rational
+arithmetic, exhaustively over all cases up to a size bound, with the analytic
+statements (the $\ell^1$ Neumann invertibility and the \texttt{tsum} expansions)
+exercised through their finite numeric consequences. The deliberate scope
+boundary --- what is and is not formalized, and why --- is recorded in
+Chapter~\ref{ch:boundary}.
+
+Status (current): the unitary spine (parity sign theorem, closed-form
+cancellation ratio, certified $(2,3)$ cell), the certified Penrose pair, and
+the \emph{entire} orthogonal Gram package are formalized \emph{sorry}-free and
+axiom-clean (\texttt{\#print axioms} $=$ \texttt{propext}, \texttt{Classical.choice},
+\texttt{Quot.sound}; no \texttt{sorryAx}, no \texttt{native\_decide}). The
+symplectic Gram package is likewise \emph{fully} proved and axiom-clean
+(conjugation, matrix factorization, both $\varepsilon$-twisted absorptions, the
+$J^2=-1$ trace, the transfer-matrix per-loop trace, and the complete crossing-sign
+factorization \texttt{thm:crossing\_sign} --- the merge-induction, both case
+residuals, and the final crossing-parity lemma \texttt{qStar\_sign}), as is the
+$\mathrm U(N)$ Haar-integration bridge of Chapter~\ref{ch:haar}. \textbf{Every
+theorem-class node below carries \texttt{leanok} (the five prose remarks carry
+no proof obligation); the whole development is \emph{sorry}-free and
+axiom-clean, independently cross-checked by the \texttt{scripts/*.py} exact-arithmetic
+suites (entry point \texttt{scripts/verify\_all.py}; all PASS).} The Lean files are the source of record;
+\texttt{scripts/VERIFICATION.md} carries the live
+per-theorem ledger, and \texttt{scripts/*.py} (entry point \texttt{scripts/verify\_all.py})
+provide independent exact-arithmetic cross-checks of every finite computational
+theorem, exhaustively over all cases up to a size bound.
+
+\section*{Design record: Mathlib reconnaissance of 11 June 2026}
+
+Three findings shape the design and are recorded here so future
+contributors need not re-litigate them.
+
+\textbf{Fact 1 (decomposition at $0$).} Mathlib provides
+\texttt{Equiv.Perm.decomposeFin}, an equivalence
+$\mathrm{Perm}(\mathrm{Fin}(n{+}1)) \simeq
+\mathrm{Fin}(n{+}1)\times\mathrm{Perm}(\mathrm{Fin}\,n)$ splitting off the
+image of $0$ (not of the last element), with simp lemmas
+\texttt{decomposeFin\_symm\_apply\_zero} and
+\texttt{decomposeFin\_symm\_apply\_succ}. This blueprint therefore adopts
+the \emph{dual} Jucys--Murphy convention $K_i:=\sum_{j>i}\swap{i}{j}$
+(Definition~\ref{def:jm}), so the keystone induction
+(Theorem~\ref{thm:jucys}) peels the factor $(N+K_0)$ exactly along
+\texttt{decomposeFin}. See Remark~\ref{rem:dual}.
+
+\textbf{Fact 2 (unattributed).} No formalization of Jucys--Murphy
+elements or of any Weingarten function was located in Mathlib, physlib, or
+elsewhere (web searches, 11 June 2026). Caveat: absence from a finite
+search is not absence; re-verify on the Lean Zulip before any novelty
+claim appears in a publication.
+
+\textbf{Fact 3 (no canonical norm).} Mathlib deliberately installs no norm
+instance on \texttt{MonoidAlgebra}: as with matrix norms, several natural
+choices exist. The $\ell^1$ structure of Chapter~\ref{ch:l1} is therefore
+a \emph{scoped} instance local to this project, following the
+\texttt{Matrix} precedent.
+
+\textbf{Attribution record (added 12 June 2026).} The components of the
+parity theorem (Theorem~\ref{thm:parity}) are displayed results: in the
+survey of Collins--Matsumoto--Novak (\emph{The Weingarten Calculus},
+Notices Amer.\ Math.\ Soc.\ \textbf{69} (2022), no.~5, 734--745;
+arXiv:2109.14890), Theorem~4.5 is the $1/N$ expansion with nonnegative
+weakly-monotone-walk coefficients and its parity constraint, Theorem~4.6
+computes the leading coefficient as a strictly positive Catalan product,
+and Theorem~4.1 is the unique strictly monotone factorization (Jucys, via
+the Biane--Stanley labeling) --- of which Lemma~\ref{lem:exists_monotone}
+is the existence half, strengthenable to uniqueness along the same
+induction. The expansion machinery is due to Novak (2010) and
+Matsumoto--Novak (\emph{Jucys--Murphy elements and unitary matrix
+integrals}, Int.\ Math.\ Res.\ Not.\ IMRN \textbf{2013}, no.~2,
+362--397; arXiv:0905.1992). No node of this blueprint is claimed as new
+mathematics; the Penrose-conditional route of Chapter~\ref{ch:below} is a
+formalization-design choice. For the below-threshold package (12 June
+update): the Penrose characterization is the standard definition of the
+below-threshold Weingarten function (Collins--\'Sniady 2006; Zinn-Justin,
+arXiv:0907.2719); the group-algebra invertibility root set
+$\{0,\dots,n-1\}$ is stated as known by Collins--Matsumoto
+(arXiv:2510.21186), where the sign-twist symmetry
+$\Wg(\sigma,-z)=(-1)^n\sgn(\sigma)\Wg(\sigma,z)$ also appears (invertible
+range); the same paper displays the rising sum rule
+(Theorem~\ref{thm:rising}) as classical inside the proof of its
+Lemma~2.2 (present since v1, 24 October 2025) --- a located display of
+known mathematics, altering no attribution here; the exact vanishing of
+the signed sum below threshold, the
+two-line evaluations through the Penrose equations, and the
+alternating-element witness remain unlocated --- reference request
+outstanding.
+
+The orthogonal and symplectic packages (Chapters~\ref{ch:pairings}--\ref{ch:symplectic}) carry the same
+discipline. The absorption identities and the crossing-sign factorization
+are proved in full --- informal proofs recorded in place, every step
+machine-checked in \texttt{scripts/} --- and the conditional sum rules
+mirror Chapter~\ref{ch:below}. Above-threshold signed sums are in print
+(Campbell--Yin, arXiv:1907.01009; the one-argument symplectic twist,
+arXiv:1412.0646, Redelmeier); the below-threshold vanishings, the
+eigenrelation form of the absorptions, and the expected-Pfaffian
+compression formula remain unlocated and are presumed routine --- no
+novelty is inferred from absence
+(the full search ledger is maintained with the project's local records).
+
+\section*{Standing conventions}
+
+$n\in\mathbb{N}$; the group is $S_n:=\mathrm{Perm}(\mathrm{Fin}\,n)$ with
+$0$-indexed points; $N$ is a \emph{real} parameter under the standing
+hypothesis $n-1<N$ where indicated. Every integer $N\ge n$ satisfies the
+hypothesis, so integer-$N$ statements are special cases.
+For $\sigma\in S_n$, $c(\sigma)$ is the number of orbits of $\sigma$ on
+$\mathrm{Fin}\,n$ (fixed points included) and $|\sigma|:=n-c(\sigma)$.
+Products of possibly noncommuting factors are taken in the displayed index
+order.
+
+\chapter{The group algebra and the dual Jucys--Murphy elements}\label{ch:jm}
+
+\begin{definition}[Group algebra]\label{def:symAlg}
+\lean{Weingarten.SymAlg}
+\leanok
+$\salg{n}:=\mathrm{MonoidAlgebra}(\R,S_n)$, the real group algebra of
+$S_n$, with basis $(\delta_\sigma)_{\sigma\in S_n}$ and convolution
+product $\delta_\sigma\delta_\tau=\delta_{\sigma\tau}$.
+\end{definition}
+
+\begin{lemma}[Mathlib: decomposition at $0$]\label{lem:decomposeFin}
+\lean{Equiv.Perm.decomposeFin}
+\mathlibok
+For each $\sigma\in S_{n+1}$ there exist unique $p\in\mathrm{Fin}(n{+}1)$
+and $e\in S_n$ with $\sigma=\swap{0}{p}\cdot\iota(e)$, where
+$\iota:S_n\hookrightarrow S_{n+1}$ fixes $0$ and acts on successors;
+moreover $p=\sigma(0)$.
+\end{lemma}
+
+\begin{definition}[Jucys--Murphy elements, dual convention]\label{def:jm}
+\lean{Weingarten.jm}
+\leanok
+\uses{def:symAlg}
+For $i\in\mathrm{Fin}\,n$,
+\[
+K_i:=\sum_{j>i}\delta_{\swap{i}{j}}\in\salg{n};
+\]
+in particular $K_{n-1}=0$ and $K_0$ has $n-1$ terms.
+\end{definition}
+
+\begin{remark}[Dual versus textbook convention]\label{rem:dual}
+\uses{def:jm}
+The textbook elements are $J_i=\sum_{a<i}(a\,i)$. Conjugation by the
+order-reversing involution $x\mapsto n-1-x$ is an algebra automorphism
+carrying $K_i$ to the ($0$-indexed) textbook $J_{n-1-i}$; it preserves the
+augmentation, the sign homomorphism, cycle counts, and the $\ell^1$ norm,
+so every statement below is equivalent to its textbook form. The $K$
+convention matches \texttt{decomposeFin}'s split at $0$ and removes an
+index-reversal layer from every induction; it is the single deliberate
+divergence from the standard textbook convention, and it is validated
+numerically by check~C3 of \texttt{scripts/convention\_checks.py}.
+\end{remark}
+
+\begin{lemma}[Commutativity]\label{lem:jm_comm}
+\lean{Weingarten.jm_comm}
+\leanok
+\uses{def:jm}
+$K_iK_j=K_jK_i$ for all $i,j\in\mathrm{Fin}\,n$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{def:jm}
+Direct computation with transpositions, as in the classical case. This is
+used only to normalize factor order in Chapter~\ref{ch:parity}; the
+factorization theorem itself fixes one order and never needs it.
+\end{proof}
+
+\chapter{Cycle count and the Gram element}\label{ch:cycle}
+
+\begin{definition}[Cycle count]\label{def:cycleCount}
+\lean{Weingarten.cycleCount}
+\leanok
+$c(\sigma):=$ (number of fixed points of $\sigma$) $+$ (number of
+nontrivial cycles of $\sigma$), i.e.\ the number of orbits of $\sigma$ on
+$\mathrm{Fin}\,n$.
+\end{definition}
+
+\begin{lemma}[Splice rule]\label{lem:cycleCount_decompose}
+\lean{Weingarten.cycleCount_decomposeFin}
+\leanok
+\uses{def:cycleCount, lem:decomposeFin}
+With $\sigma=\swap{0}{p}\cdot\iota(e)\in S_{n+1}$: if $p=0$ then
+$c(\sigma)=c(e)+1$, otherwise $c(\sigma)=c(e)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{def:cycleCount, lem:decomposeFin}
+If $p=0$ then $\sigma=\iota(e)$ and $0$ is a new fixed point. If
+$p\neq0$, the point $0$ is spliced into the orbit of $p$: one checks
+$\sigma(0)=p$, and $\sigma(x)=0$ for the unique $x$ with $\iota(e)(x)=p$,
+all other values unchanged; orbits not containing $p$ are untouched and
+$p$'s orbit absorbs $0$, leaving the count unchanged. This is the hardest
+purely combinatorial lemma of the project; it is verified exhaustively
+for $n+1\le6$ by check~C2 of \texttt{scripts/convention\_checks.py}.
+\end{proof}
+
+\begin{definition}[Gram element]\label{def:gram}
+\lean{Weingarten.gram}
+\leanok
+\uses{def:symAlg, def:cycleCount}
+$\mathcal G_n(N):=\sum_{\sigma\in S_n}N^{c(\sigma)}\,\delta_\sigma
+\in\salg{n}$, for real $N$.
+\end{definition}
+
+\begin{theorem}[Jucys factorization, dual form]\label{thm:jucys}
+\lean{Weingarten.gram_eq_prod}
+\leanok
+\uses{def:gram, def:jm}
+For every real $N$:
+\[
+\mathcal G_n(N)=\prod_{i=0}^{n-1}\bigl(N+K_i\bigr),
+\]
+the product taken in increasing index order.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:decomposeFin, lem:cycleCount_decompose}
+Induction on $n$; the base $n=0$ reads $1=1$. For the step, decompose
+$\sigma=\swap{0}{p}\,\iota(e)$ by Lemma~\ref{lem:decomposeFin} and apply
+Lemma~\ref{lem:cycleCount_decompose}:
+\[
+\mathcal G_{n+1}(N)
+=\sum_{e\in S_n}\Bigl(N^{c(e)+1}\,\iota(e)
++\sum_{p\neq0}N^{c(e)}\,\swap{0}{p}\,\iota(e)\Bigr)
+=(N+K_0)\,\iota_*\bigl(\mathcal G_n(N)\bigr),
+\]
+where $\iota_*$ is the algebra map induced by $\iota$. Since
+$\iota_*$ carries $K_i^{(n)}$ to $K_{i+1}^{(n+1)}$, the inductive
+hypothesis turns the right factor into
+$\prod_{i=1}^{n}(N+K_i^{(n+1)})$. Check~C3 of
+\texttt{scripts/convention\_checks.py} verifies the identity exactly for
+$n\le5$ at several rational $N$.
+\end{proof}
+
+\chapter{The below-threshold package: Penrose-conditional sum rules}\label{ch:below}
+
+The two sum rules are evaluations of one-dimensional characters, and those
+evaluations pass through the \emph{Penrose equations}
+$\mathcal G\mathcal W\mathcal G=\mathcal G$,
+$\mathcal W\mathcal G\mathcal W=\mathcal W$ exactly as they pass through
+inverses. Stating the rules conditionally on a Penrose partner makes them
+valid at \emph{every} $N$ --- including below threshold, where the Gram
+element is singular --- with no character theory, no Schur functions and
+no spectral theory. The stable-range rules of Chapter~\ref{ch:wg} become
+one-line corollaries, so the analytic chapter is needed only for existence
+of the inverse and for the parity theorem. This is a formalization-design
+choice, not a claim of new theorems. Indeed the characterization itself is
+the literature's standard definition of the below-threshold Weingarten
+function: following Collins--\'Sniady (\emph{Comm. Math. Phys.}
+\textbf{264} (2006), 773--795), $\Wg$ is conventionally the pseudo-inverse
+of the Gram data, and P.~Zinn-Justin (arXiv:0907.2719) records the
+convention in exactly this two-equation form. The two-line character
+evaluations below, their conditional formulation, and the
+alternating-element witness have not been located in print (searches of
+11--12 June 2026; reference request outstanding) and are presumed routine
+to experts. Throughout, the coefficient ring is an arbitrary commutative
+ring $k$ (a field where inverses are displayed); the Lean development is
+generalized accordingly, with only the $\ell^1$ and parity chapters pinned
+to $\R$. Checks B1--B5 of \texttt{scripts/convention\_checks.py} pin every
+identity below in exact rational arithmetic.
+
+\begin{lemma}[Coefficient formulas for the two characters]\label{lem:hom_coeffsum}
+\lean{Weingarten.aug_apply}
+\leanok
+\uses{def:symAlg}
+Via \texttt{MonoidAlgebra.lift}, the trivial character and the sign
+character extend to unital algebra homomorphisms
+$\varepsilon,\hat s:\salg{n}\to\R$ with
+$\varepsilon(x)=\sum_\sigma x_\sigma$ and
+$\hat s(x)=\sum_\sigma\sgn(\sigma)\,x_\sigma$.
+(Lean names: \texttt{Weingarten.aug\_apply},
+\texttt{Weingarten.sgnHom\_apply}.)
+\end{lemma}
+
+\begin{lemma}[Values on $K_i$]\label{lem:aug}
+\lean{Weingarten.aug_jm}
+\leanok
+\uses{lem:hom_coeffsum, def:jm}
+$\varepsilon(K_i)=n-1-i$ and $\hat s(K_i)=-(n-1-i)$.
+(Lean names: \texttt{Weingarten.aug\_jm}, \texttt{Weingarten.sgn\_jm};
+verified numerically by check~C4.)
+\end{lemma}
+
+\begin{lemma}[Character values of the Gram element, all $N$]\label{lem:gram_eval}
+\lean{Weingarten.aug_gram}
+\leanok
+\uses{thm:jucys, lem:aug, lem:hom_coeffsum}
+For every $N\in k$:
+$\varepsilon(\mathcal G_n(N))=\prod_{m=0}^{n-1}(N+m)$ and
+$\hat s(\mathcal G_n(N))=\prod_{m=0}^{n-1}(N-m)$.
+(Lean names: \texttt{Weingarten.aug\_gram}, \texttt{Weingarten.sgnHom\_gram};
+check~B2, including $N<n$ and fractional $N$.)
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{thm:jucys, lem:aug}
+The Jucys factorization is a polynomial identity valid for all $N$ with no
+invertibility anywhere; apply each homomorphism factorwise and reindex by
+$m=n-1-i$.
+\end{proof}
+
+\begin{definition}[Alternating element]\label{def:alt}
+\lean{Weingarten.alt}
+\leanok
+\uses{def:symAlg}
+$a_n:=\sum_{\sigma}\sgn(\sigma)\,\delta_\sigma\in\salg{n}$.
+\end{definition}
+
+\begin{lemma}[Absorption]\label{lem:alt_mul}
+\lean{Weingarten.alt_mul}
+\leanok
+\uses{def:alt, lem:hom_coeffsum}
+$a_n\,x=\hat s(x)\,a_n$ for every $x\in\salg{n}$ (check~B1).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{def:alt}
+By linearity it suffices that $a_n\,\delta_g=\sgn(g)\,a_n$, which is the
+substitution $\rho=\sigma g$ together with multiplicativity of $\sgn$.
+\end{proof}
+
+\begin{theorem}[Gram singularity below threshold]\label{thm:gram_singular}
+\lean{Weingarten.not_isUnit_gram}
+\leanok
+\uses{lem:alt_mul, lem:gram_eval}
+Over $\mathbb{Q}$, for every integer $1\le N<n$ the Gram element
+$\mathcal G_n(N)$ is not a unit. The statement is known: invertibility of
+$\mathcal G_n(N)$ in the group algebra holds exactly off the integer root
+set $\{0,1,\dots,n-1\}$ (stated as known by Collins--Matsumoto,
+arXiv:2510.21186). The alternating-element proof below is the part we have
+not located in print.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:alt_mul, lem:gram_eval}
+$a_n\,\mathcal G_n(N)=\hat s(\mathcal G_n(N))\,a_n
+=\bigl(\prod_{m<n}(N-m)\bigr)\,a_n=0$, the factor $m=N$ vanishing, while
+$a_n\neq0$ in characteristic zero; a unit cannot be a right zero divisor.
+(Checks B3, B3b.)
+\end{proof}
+
+\begin{definition}[Penrose pair]\label{def:penrose_pair}
+\lean{Weingarten.IsPenrosePair}
+\leanok
+\uses{def:gram}
+$\mathcal W$ is a \emph{Penrose partner} of $\mathcal G$ if
+$\mathcal G\mathcal W\mathcal G=\mathcal G$ and
+$\mathcal W\mathcal G\mathcal W=\mathcal W$. Any Moore--Penrose
+pseudo-inverse qualifies; so does the genuine inverse when it exists.
+This pair of equations is the literature's standard convention for the
+below-threshold Weingarten function (Collins--\'Sniady 2006; recorded in
+this two-equation form by Zinn-Justin, arXiv:0907.2719, and in the
+orthogonal setting in \emph{The orthogonal Weingarten formula in compact
+form}, arXiv:0906.4694).
+\end{definition}
+
+\begin{theorem}[Conditional rising rule, all $N$]\label{thm:rising_conditional}
+\lean{Weingarten.sum_wg_of_penrose}
+\leanok
+\uses{def:penrose_pair, lem:gram_eval}
+Over a field, if $\mathcal W$ is a Penrose partner of $\mathcal G_n(N)$
+and $r:=\prod_{m=0}^{n-1}(N+m)\neq0$ --- true for every real $N>0$, in
+particular every positive integer including $N<n$ --- then
+$\varepsilon(\mathcal W)=r^{-1}$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:gram_eval}
+Apply $\varepsilon$ to $\mathcal G\mathcal W\mathcal G=\mathcal G$:
+$r^{2}\,\varepsilon(\mathcal W)=r$.
+\end{proof}
+
+\begin{theorem}[Conditional falling rule off the root set]\label{thm:falling_conditional}
+\lean{Weingarten.sum_sgn_wg_of_penrose}
+\leanok
+\uses{def:penrose_pair, lem:gram_eval}
+Over a field, if $\mathcal W$ is a Penrose partner of $\mathcal G_n(N)$
+and $f:=\prod_{m=0}^{n-1}(N-m)\neq0$, then $\hat s(\mathcal W)=f^{-1}$.
+This recovers the stable-range falling rule and extends it to every $N$
+off the root set $\{0,1,\dots,n-1\}$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:gram_eval}
+Apply $\hat s$ to $\mathcal G\mathcal W\mathcal G=\mathcal G$:
+$f^{2}\,\hat s(\mathcal W)=f$.
+\end{proof}
+
+\begin{theorem}[Exact vanishing below threshold]\label{thm:vanish_below}
+\lean{Weingarten.sgnHom_eq_zero_of_penrose}
+\leanok
+\uses{def:penrose_pair, lem:gram_eval}
+Over any commutative ring, if
+$\mathcal W\mathcal G_n(N)\mathcal W=\mathcal W$ and
+$\prod_{m=0}^{n-1}(N-m)=0$ --- e.g.\ every integer $1\le N<n$ --- then
+$\hat s(\mathcal W)=0$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:gram_eval}
+$\hat s(\mathcal W)
+=\hat s(\mathcal W)\,\hat s(\mathcal G)\,\hat s(\mathcal W)
+=\hat s(\mathcal W)\cdot 0\cdot\hat s(\mathcal W)=0$.
+\end{proof}
+
+\begin{theorem}[Forced breakdown of the sign pattern]\label{thm:sign_breakdown}
+\lean{Weingarten.sign_breakdown_of_penrose}
+\leanok
+\uses{thm:vanish_below, def:cycleCount}
+Over $\R$, under the hypotheses of Theorem~\ref{thm:vanish_below}, the
+strict parity pattern $0<(-1)^{\,n-c(\sigma)}\,\mathcal W_\sigma$ cannot
+hold for every $\sigma$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:vanish_below}
+A nonempty sum of strictly positive terms is positive, contradicting
+$\hat s(\mathcal W)=0$.
+\end{proof}
+
+\chapter{The scoped \texorpdfstring{$\ell^1$}{l1} structure and invertibility}\label{ch:l1}
+
+\begin{definition}[Scoped $\ell^1$ norm]\label{def:l1}
+\lean{Weingarten.instL1NormedRing}
+\leanok
+\uses{def:symAlg}
+$\|x\|_1:=\sum_{\sigma}|x_\sigma|$ on $\salg{n}$. This is a complete
+algebra norm: submultiplicativity is the finite Young inequality for
+convolution on a group. Installed as a \emph{scoped} \texttt{NormedRing}
+instance (Fact~3 of Chapter~\ref{ch:intro}).
+\end{definition}
+
+\begin{lemma}[Norm of $K_i$]\label{lem:jm_norm}
+\lean{Weingarten.jm_norm}
+\leanok
+\uses{def:jm, def:l1}
+$\|K_i\|_1=n-1-i\le n-1$.
+\end{lemma}
+
+\begin{lemma}[Invertibility]\label{lem:unit}
+\lean{Weingarten.isUnit_add_jm}
+\leanok
+\uses{def:l1, lem:jm_norm}
+If $n-1<N$ then each $N+K_i$ is a unit of $\salg{n}$, with inverse the
+absolutely convergent Neumann series
+$\sum_{k\ge0}(-1)^k K_i^k N^{-k-1}$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{lem:jm_norm}
+$\|K_i/N\|_1\le(n-1)/N<1$; apply the geometric-series construction of
+units in a complete normed ring (Mathlib's \texttt{Units.oneSub} family).
+\end{proof}
+
+\chapter{The Weingarten element and the two sum rules}\label{ch:wg}
+
+\begin{definition}[Weingarten element]\label{def:wgElement}
+\lean{Weingarten.wgElement}
+\leanok
+\uses{def:gram, thm:jucys, lem:unit}
+For $n-1<N$ the element $\mathcal G_n(N)$ is a unit, being a product of
+units by Theorem~\ref{thm:jucys} and Lemma~\ref{lem:unit}; set
+$\mathcal W_n(N):=\mathcal G_n(N)^{-1}\in\salg{n}$.
+\end{definition}
+
+\begin{definition}[Weingarten function]\label{def:wg}
+\lean{Weingarten.wg}
+\leanok
+\uses{def:wgElement}
+$\Wg(\sigma,N):=$ the $\delta_\sigma$-coefficient of $\mathcal W_n(N)$.
+\end{definition}
+
+\begin{theorem}[Inverse property]\label{thm:gram_mul}
+\lean{Weingarten.gram_mul_wgElement}
+\leanok
+\uses{def:gram, def:wgElement}
+$\mathcal G_n(N)\,\mathcal W_n(N)=1=\mathcal W_n(N)\,\mathcal G_n(N)$
+for $n-1<N$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:jucys, lem:unit}
+Immediate: $\mathcal W_n(N)$ is the inverse of a unit.
+\end{proof}
+
+
+\begin{lemma}[The stable inverse is a Penrose partner]\label{lem:penrose_of_unit}
+\lean{Weingarten.isPenrosePair_wgElement}
+\leanok
+\uses{thm:gram_mul, def:penrose_pair}
+For $n-1<N$ the Weingarten element $\mathcal W_n(N)$ is a Penrose partner
+of $\mathcal G_n(N)$: both equations follow from
+$\mathcal G\mathcal W=1=\mathcal W\mathcal G$.
+\end{lemma}
+
+\begin{theorem}[Rising sum rule]\label{thm:rising}
+\lean{Weingarten.sum_wg}
+\leanok
+\uses{def:wg, thm:rising_conditional, lem:penrose_of_unit}
+For $n-1<N$:
+\[
+\sum_{\sigma\in S_n}\Wg(\sigma,N)=\prod_{m=0}^{n-1}\frac1{N+m}.
+\]
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:rising_conditional, lem:penrose_of_unit}
+Instantiate Theorem~\ref{thm:rising_conditional} at the Penrose partner of
+Lemma~\ref{lem:penrose_of_unit}; $\prod_m(N+m)>0$ in the stable range, and
+$\varepsilon(\mathcal W)$ is the coefficient sum by
+Lemma~\ref{lem:hom_coeffsum}.
+\end{proof}
+
+\begin{theorem}[Falling sum rule]\label{thm:falling}
+\lean{Weingarten.sum_sgn_wg}
+\leanok
+\uses{def:wg, thm:falling_conditional, lem:penrose_of_unit}
+For $n-1<N$:
+\[
+\sum_{\sigma\in S_n}\sgn(\sigma)\,\Wg(\sigma,N)
+=\prod_{m=0}^{n-1}\frac1{N-m}.
+\]
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:falling_conditional, lem:penrose_of_unit}
+Instantiate Theorem~\ref{thm:falling_conditional} likewise;
+$\prod_m(N-m)>0$ since $N>n-1$.
+\end{proof}
+
+\begin{remark}[Below threshold: in and out of scope]\label{rem:allN}
+\uses{thm:rising_conditional, thm:vanish_below}
+The all-$N$ statements are now \emph{in} scope in conditional form
+(Chapter~\ref{ch:below}): for any Penrose partner the rising value
+persists at every $N>0$ and the signed sum vanishes exactly for integer
+$1\le N<n$. What remains out of scope is the \emph{general existence} of
+a Penrose partner below threshold and its identification with the
+restricted character-sum definition (Chapter~\ref{ch:boundary}); the cell
+of Chapter~\ref{ch:cell} is the certified existence instance.
+\end{remark}
+
+\chapter{The parity sign theorem}\label{ch:parity}
+
+\begin{lemma}[Sign of a word]\label{lem:sign_word}
+\lean{Weingarten.sign_prod_swaps}
+\leanok
+The sign of a product of $k$ transpositions is $(-1)^k$; consequently any
+word of transpositions with product $\sigma$ has length
+$\equiv|\sigma|\ (\mathrm{mod}\ 2)$. Proved via Mathlib's
+\texttt{Equiv.Perm.sign\_prod\_list\_swap}.
+\end{lemma}
+
+The next six lemmas are the verified analytic engine of
+Lemma~\ref{lem:expansion}: they reduce $\mathcal W_n(N)$, in the stable range,
+to a single absolutely convergent sum over slot multi-indices. The remaining
+gap in Lemma~\ref{lem:expansion} is purely the combinatorial
+coefficient-extraction from that sum.
+
+\begin{lemma}[Single-factor Neumann series]\label{lem:inverse_factor}
+\lean{Weingarten.inverse_add_jm_eq_tsum}
+\leanok
+\uses{def:jm, lem:unit, def:l1}
+For $n-1<N$ and each slot $i$,
+\[
+(N+K_i)^{-1}=N^{-1}\sum_{k\ge0}\bigl(-N^{-1}K_i\bigr)^{k},
+\]
+the series converging absolutely since $\|N^{-1}K_i\|_1<1$.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:jm_norm}
+Write $N+K_i=N\cdot(1-x)$ with $x=-N^{-1}K_i$; then
+$(N+K_i)^{-1}=N^{-1}(1-x)^{-1}$ and $(1-x)^{-1}=\sum_k x^k$ by the geometric
+series in a Banach algebra (Mathlib \texttt{geom\_series\_eq\_inverse}).
+\end{proof}
+
+\begin{lemma}[Inverse of a commuting product]\label{lem:inverse_list_prod}
+\lean{Weingarten.inverse_list_prod_of_commute}
+\leanok
+For a list of pairwise-commuting units in any ring,
+$\bigl(\prod_i a_i\bigr)^{-1}=\prod_i a_i^{-1}$ in the \emph{same} order: the
+anti-homomorphism reversal of $(-)^{-1}$ is undone by commutativity. A general
+ring lemma, reused below.
+\end{lemma}
+
+\begin{lemma}[Product form of $\mathcal W$]\label{lem:wg_prod_inverse}
+\lean{Weingarten.wgElement_eq_prod_inverse}
+\leanok
+\uses{def:wgElement, thm:jucys, lem:unit, lem:jm_comm, lem:inverse_list_prod}
+For $n-1<N$, $\displaystyle \mathcal W_n(N)=\prod_{i=0}^{n-1}(N+K_i)^{-1}$, in
+increasing slot order.
+\end{lemma}
+\begin{proof}\leanok\uses{thm:jucys, lem:inverse_list_prod}
+Invert the Jucys factorization $\mathcal G_n(N)=\prod_i(N+K_i)$
+(Theorem~\ref{thm:jucys}) factorwise: the $N+K_i$ are units
+(Lemma~\ref{lem:unit}) and pairwise commute (Lemma~\ref{lem:jm_comm}, with $N$
+central), so Lemma~\ref{lem:inverse_list_prod} applies.
+\end{proof}
+
+\begin{lemma}[Product of Neumann series]\label{lem:wg_prod_tsum}
+\lean{Weingarten.wgElement_eq_prod_tsum}
+\leanok
+\uses{lem:wg_prod_inverse, lem:inverse_factor}
+For $n-1<N$,
+$\displaystyle \mathcal W_n(N)=\prod_{i=0}^{n-1}\Bigl(N^{-1}\sum_{k\ge0}(-N^{-1}K_i)^k\Bigr)$.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:inverse_factor}
+Expand each factor of Lemma~\ref{lem:wg_prod_inverse} by the single-factor
+series of Lemma~\ref{lem:inverse_factor}.
+\end{proof}
+
+\begin{lemma}[$n$-fold Cauchy product]\label{lem:cauchy_prod}
+\lean{Weingarten.list_prod_tsum}
+\leanok
+In a complete normed ring, an ordered product of absolutely convergent series
+distributes into a single sum over multi-indices, preserving the order:
+\[
+\prod_{i=0}^{n-1}\Bigl(\sum_{k\ge0}f_i(k)\Bigr)
+=\sum_{\kappa:\,\mathrm{Fin}\,n\to\mathbb N}\ \prod_{i=0}^{n-1}f_i(\kappa_i).
+\]
+The summability side-condition --- that the multi-indexed product is absolutely
+summable --- is \texttt{Weingarten.summable\_list\_prod\_norm}.
+\end{lemma}
+\begin{proof}\leanok
+Induction on $n$, applying the binary Cauchy product (Mathlib
+\texttt{tsum\_mul\_tsum\_of\_summable\_norm}) at each step and reindexing
+$\mathbb N\times(\mathrm{Fin}\,n\to\mathbb N)\simeq(\mathrm{Fin}(n{+}1)\to\mathbb N)$
+via \texttt{Fin.consEquiv}.
+\end{proof}
+
+\begin{lemma}[Multi-index form of $\mathcal W$]\label{lem:wg_multiindex}
+\lean{Weingarten.wgElement_eq_tsum}
+\leanok
+\uses{lem:wg_prod_tsum, lem:cauchy_prod}
+For $n-1<N$,
+\[
+\mathcal W_n(N)
+=\sum_{\kappa:\,\mathrm{Fin}\,n\to\mathbb N}\
+\prod_{i=0}^{n-1}\Bigl(N^{-1}\,(-N^{-1}K_i)^{\kappa_i}\Bigr).
+\]
+\end{lemma}
+\begin{proof}\leanok\uses{lem:cauchy_prod}
+Rewrite each factor of Lemma~\ref{lem:wg_prod_tsum} as
+$\sum_k N^{-1}(-N^{-1}K_i)^k$ and apply the $n$-fold Cauchy product
+(Lemma~\ref{lem:cauchy_prod}); absolute summability per slot is the geometric
+bound $\|N^{-1}K_i\|_1<1$.
+\end{proof}
+
+\begin{lemma}[Scalar/word separation]\label{lem:wg_word}
+\lean{Weingarten.wgElement_eq_word_tsum}
+\leanok
+\uses{lem:wg_multiindex}
+For $n-1<N$, writing $|\kappa|:=\sum_i\kappa_i$,
+\[
+\mathcal W_n(N)
+=\sum_{\kappa:\,\mathrm{Fin}\,n\to\mathbb N}
+(-1)^{|\kappa|}\,N^{-(n+|\kappa|)}\,\prod_{i=0}^{n-1}K_i^{\kappa_i}.
+\]
+Each term is an explicit scalar --- depending only on the total degree
+$|\kappa|$ --- times the swap-word product $\prod_i K_i^{\kappa_i}$, a
+nonnegative-integer combination of permutations.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:wg_multiindex}
+Pull the scalars out of each factor of Lemma~\ref{lem:wg_multiindex}:
+$N^{-1}(-N^{-1}K_i)^{\kappa_i}=(-1)^{\kappa_i}N^{-(\kappa_i+1)}K_i^{\kappa_i}$,
+and the exponents sum as $\sum_i(\kappa_i+1)=n+|\kappa|$.
+\end{proof}
+
+\begin{lemma}[Coordinate-coefficient linearization]\label{lem:wg_coeff}
+\lean{Weingarten.wg_eq_tsum_coeff}
+\leanok
+\uses{def:wg, lem:wg_word}
+For $n-1<N$ and each $\sigma$, with $|\kappa|:=\sum_i\kappa_i$,
+\[
+\Wg(\sigma,N)
+=\sum_{\kappa:\,\mathrm{Fin}\,n\to\mathbb N}
+(-1)^{|\kappa|}\,N^{-(n+|\kappa|)}\,
+\bigl(\textstyle\prod_{i}K_i^{\kappa_i}\bigr)(\sigma),
+\]
+where $\bigl(\prod_i K_i^{\kappa_i}\bigr)(\sigma)$ is the $\delta_\sigma$-coefficient
+of the swap-word product (a nonnegative integer). A real-valued series.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:wg_word}
+Apply the $\delta_\sigma$-coordinate functional $x\mapsto x(\sigma)$ to
+Lemma~\ref{lem:wg_word}. The functional is continuous --- indeed
+$\salg{n}=\mathbb R[S_n]$ is finite-dimensional, so every linear functional is
+continuous --- hence commutes with the absolutely convergent sum, and it scales
+each term: $\bigl((-1)^{|\kappa|}N^{-(n+|\kappa|)}\prod_iK_i^{\kappa_i}\bigr)(\sigma)
+=(-1)^{|\kappa|}N^{-(n+|\kappa|)}\bigl(\prod_iK_i^{\kappa_i}\bigr)(\sigma)$.
+\end{proof}
+
+\begin{lemma}[Integral coefficients]\label{lem:wg_count}
+\lean{Weingarten.wg_eq_tsum_natCount}
+\leanok
+\uses{def:wg, lem:wg_coeff}
+For $n-1<N$ and each $\sigma$, with $|\kappa|:=\sum_i\kappa_i$,
+\[
+\Wg(\sigma,N)
+=\sum_{\kappa:\,\mathrm{Fin}\,n\to\mathbb N}
+(-1)^{|\kappa|}\,N^{-(n+|\kappa|)}\,c_\kappa(\sigma),
+\]
+where $c_\kappa(\sigma)\in\mathbb N$ is the $\delta_\sigma$-coefficient of the
+swap-word product $\prod_iK_i^{\kappa_i}$ taken over $\mathbb N$ --- the number
+of factorizations of $\sigma$ as an ordered product of $\kappa_i$ slot-$i$
+transpositions.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:wg_coeff}
+The coefficient $\bigl(\prod_iK_i^{\kappa_i}\bigr)(\sigma)$ of
+Lemma~\ref{lem:wg_coeff} is the image, under the coefficient-cast ring
+homomorphism $\mathbb N[S_n]\to\mathbb R[S_n]$, of the same word formed from the
+$\mathbb N$-coefficient elements $K_i^{\mathbb N}=\sum_{j>i}\swap{i}{j}$; the
+ring homomorphism acts coefficient-wise, so the real coefficient is the
+$\mathrm{Nat.cast}$ of the integer count $c_\kappa(\sigma)$.
+\end{proof}
+
+\begin{lemma}[Degree regrouping]\label{lem:wg_degree}
+\lean{Weingarten.wg_eq_tsum_degree}
+\leanok
+\uses{def:wg, lem:wg_count}
+For $n-1<N$ and each $\sigma$,
+\[
+\Wg(\sigma,N)
+=\sum_{k\ge0}(-1)^k\,N^{-(n+k)}\,m_k(\sigma),
+\qquad
+m_k(\sigma):=\sum_{|\kappa|=k}c_\kappa(\sigma)\in\mathbb N,
+\]
+the sum over $\kappa$ of degree $k$ taken over the finite set of slot-degree
+tuples (the antidiagonal tuple $\mathrm{antidiagonalTuple}\,n\,k$).
+\end{lemma}
+\begin{proof}\leanok\uses{lem:wg_count}
+The series of Lemma~\ref{lem:wg_count} is absolutely convergent (the
+$\delta_\sigma$-coordinate of the summable word product), so it may be regrouped
+by the total degree $|\kappa|=\sum_i\kappa_i$. The fibers of the degree map are
+the finite tuple-antidiagonals, and the scalar $(-1)^{|\kappa|}N^{-(n+|\kappa|)}$
+is constant on each fiber, factoring out of the (finite) inner sum that defines
+$m_k(\sigma)$.
+\end{proof}
+
+\begin{lemma}[Parity restriction]\label{lem:parity_restriction}
+\lean{Weingarten.mCount_parity}
+\leanok
+\uses{lem:wg_degree, lem:sign_word, lem:cycleCount_decompose}
+For each $\sigma$ and each $k$, if $m_k(\sigma)\ne0$ then
+$k\equiv|\sigma|\ (\mathrm{mod}\ 2)$, where $|\sigma|=n-c(\sigma)$.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:sign_word}
+A nonzero count $m_k(\sigma)$ exhibits a slot-degree tuple $\kappa$ of degree $k$
+with $\bigl(\prod_iK_i^{\kappa_i}\bigr)(\sigma)\ne0$. Each $K_i$ is supported on
+transpositions (sign $-1$), and support signs multiply, so the swap-word product
+$\prod_iK_i^{\kappa_i}$ is supported only on permutations of sign $(-1)^{|\kappa|}=(-1)^k$
+(formalized as a sign-homogeneity invariant, \texttt{Weingarten.word\_support\_sign}).
+Hence $\sign(\sigma)=(-1)^k$; comparing with $\sign(\sigma)=(-1)^{n-c(\sigma)}$
+(\texttt{Weingarten.sign\_eq\_neg\_one\_pow}) forces $k\equiv n-c(\sigma)\ (\mathrm{mod}\ 2)$.
+\end{proof}
+
+\begin{lemma}[Nonnegative expansion]\label{lem:expansion}
+\lean{Weingarten.wg_expansion}
+\leanok
+\uses{def:wg, lem:wg_degree, lem:parity_restriction, lem:min_term}
+For $n-1<N$ and each $\sigma$,
+\[
+(-1)^{|\sigma|}\,\Wg(\sigma,N)
+=\sum_{k\ge0} m_k(\sigma)\,N^{-(n+k)},
+\]
+where $m_k(\sigma)\in\mathbb{Z}_{\ge0}$ counts the tuples of words
+$(w_0,\dots,w_{n-1})$ --- each $w_i$ a word in the transpositions
+$\{\swap{i}{j}:j>i\}$ supporting $K_i$ --- of total length $k$ whose
+ordered product is $\sigma$; and $m_k(\sigma)=0$ unless
+$k\equiv|\sigma|\ (\mathrm{mod}\ 2)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{lem:wg_degree, lem:parity_restriction, lem:min_term}
+Lemma~\ref{lem:wg_degree} expresses
+$\Wg(\sigma,N)=\sum_{k\ge0}(-1)^kN^{-(n+k)}m_k(\sigma)$ with nonnegative integer
+counts $m_k(\sigma)\in\mathbb N$, and Lemma~\ref{lem:parity_restriction} gives
+$m_k(\sigma)=0$ unless $k\equiv|\sigma|\ (\mathrm{mod}\ 2)$. On every surviving term
+$k\equiv|\sigma|$, so $(-1)^k=(-1)^{|\sigma|}$; multiplying the absolutely
+convergent series through by $(-1)^{|\sigma|}$ (as a \texttt{HasSum}) collapses the
+alternating sign and gives the stated nonnegative expansion. The minimal term
+$m_{|\sigma|}(\sigma)\ne0$ is Lemma~\ref{lem:min_term}.
+\end{proof}
+
+\begin{lemma}[A shortest slot-word exists]\label{lem:exists_monotone}
+\lean{Weingarten.exists_min_word}
+\leanok
+\uses{def:cycleCount}
+For every $\sigma\in S_n$ there is a tuple $(w_0,\dots,w_{n-1})$ in which
+each $w_i$ is either empty or a single transposition $\swap{i}{j_i}$ with
+$j_i>i$, whose ordered product is $\sigma$ and whose total length is
+exactly $|\sigma|=n-c(\sigma)$. Hence $m_{|\sigma|}(\sigma)\ge1$.
+\end{lemma}
+\begin{proof}\leanok
+\uses{lem:decomposeFin, lem:cycleCount_decompose, def:cycleCount}
+A \emph{slot-word tuple} is a tuple $(w_0,\dots,w_{n-1})$ in which each
+$w_i$ is either empty (denoting $\id$) or a single slot-$i$ transposition
+$\swap{i}{j_i}$ with $j_i>i$; its product is $\pi(w):=w_0w_1\cdots w_{n-1}$
+taken in increasing slot order, and its length $\ell(w)$ is the number of
+nonempty slots. We must produce, for each $\sigma$, such a tuple with
+$\pi(w)=\sigma$ and $\ell(w)=|\sigma|=n-c(\sigma)$. We induct on $n$.
+
+\smallskip\noindent\emph{Length step.} First record the one quantitative input.
+If $\sigma\in S_{n+1}$ decomposes as $\sigma=\swap{0}{p}\,\iota(e)$ via
+Lemma~\ref{lem:decomposeFin} (with $p=\sigma(0)$, $e\in S_n$, and $\iota$ the
+embedding fixing $0$ and sending $x\mapsto x{+}1$ on successors), then the splice
+rule (Lemma~\ref{lem:cycleCount_decompose}) gives $c(\sigma)=c(e)+1$ when $p=0$
+and $c(\sigma)=c(e)$ when $p\neq0$. Since $|\sigma|=(n{+}1)-c(\sigma)$ and
+$|e|=n-c(e)$, this reads $|\sigma|=|e|$ for $p=0$ and $|\sigma|=|e|+1$ for
+$p\neq0$: a genuine slot-$0$ transposition raises $|\cdot|$ by exactly one, and
+the empty slot $0$ leaves it unchanged.
+
+\smallskip\noindent\emph{Base case $n=0$.} $S_0$ is trivial, so $\sigma=\id$; the
+empty tuple is the unique slot-word tuple, with product $\id=\sigma$ and length
+$0$. As $c(\id)=0$ we have $|\sigma|=0$, so $\ell(w)=0=|\sigma|$.
+
+\smallskip\noindent\emph{Inductive step.} Assume the statement for $S_n$ and take
+$\sigma\in S_{n+1}$. Apply Lemma~\ref{lem:decomposeFin} to get $p=\sigma(0)$ and
+$e\in S_n$ with $\sigma=\swap{0}{p}\,\iota(e)$, and let $v=(v_0,\dots,v_{n-1})$ be
+the slot-word tuple for $e$ supplied by the inductive hypothesis, with
+$\pi(v)=e$ and $\ell(v)=|e|$. Define $w=(w_0,\dots,w_n)$ by
+\[
+  w_0:=\begin{cases}\text{empty}, & p=0,\\ \swap{0}{p}, & p\neq0,\end{cases}
+  \qquad w_{i+1}:=\iota(v_i)\ \ (i\in\Fin n).
+\]
+Because $\iota$ fixes $0$ and sends $x\mapsto x{+}1$ on successors, it carries a
+slot-$i$ transposition $\swap{i}{j}$ ($j>i$) to $\swap{i{+}1}{j{+}1}$ with
+$j{+}1>i{+}1$, and it carries the empty entry to the empty entry; hence each
+$w_{i+1}$ is a legal slot-$(i{+}1)$ entry, slot $0$ is set independently, and no
+slot is reused, so $w$ is a bona fide slot-word tuple for $S_{n+1}$.
+
+Since $\iota$ is a homomorphism it preserves ordered products, so
+$w_1\cdots w_n=\iota(v_0)\cdots\iota(v_{n-1})=\iota(e)$, and prepending slot $0$
+gives $\pi(w)=w_0\,\iota(e)$. When $p=0$, $w_0=\id=\swap{0}{0}=\swap{0}{p}$; when
+$p\neq0$, $w_0=\swap{0}{p}$. In both cases $\pi(w)=\swap{0}{p}\,\iota(e)=\sigma$.
+For the length, the shift preserves emptiness, so the block $w_1,\dots,w_n$ has
+exactly $\ell(v)=|e|$ nonempty slots, while slot $0$ contributes $0$ if $p=0$ and
+$1$ if $p\neq0$. By the length step the resulting total $\ell(w)$ equals $|\sigma|$
+in both branches, completing the induction.
+
+Finally, the constructed tuple is one factorization of $\sigma$ of length
+$|\sigma|$, so it contributes a term $\ge1$ to
+$m_{|\sigma|}(\sigma)=\sum_{|\kappa|=|\sigma|}c_\kappa(\sigma)$ (taking $\kappa_i=1$
+on the nonempty slots); hence $m_{|\sigma|}(\sigma)\ge1$, the nonvanishing recorded
+in Lemma~\ref{lem:min_term}. Verified constructively for all $\sigma$ with
+$n\le5$ by check~C5.
+
+\medskip\noindent\emph{Reduced form.} \texttt{exists\_min\_word} is the same
+induction on $n$ run directly on the witness data $f:\Fin n\to\mathrm{Option}\,(\Fin n)$.
+The \texttt{zero} case returns the empty function (\texttt{i.elim0}) and discharges
+the trivial product by \texttt{Subsingleton.elim}; the \texttt{succ} case sets
+$(p,e):=\texttt{decomposeFin}\,\sigma$, recurses to get $f'$ for $e$, and defines
+$f:=\texttt{Fin.cases}\,(\text{if }p=0\text{ then none else some }p)\,(\lambda j,\,(f'\,j).\texttt{map Fin.succ})$.
+The three bundled goals are then closed mechanically: monotonicity via
+\texttt{Fin.succ\_lt\_succ\_iff}, the product via \texttt{iotaHom\_swap} together with
+\texttt{map\_list\_prod (iotaHom n)} and \texttt{decomposeFin\_symm\_eq}, and the length
+count via \texttt{cycleCount\_decomposeFin} closed by \texttt{omega}.
+\end{proof}
+
+\begin{lemma}[Nonvanishing minimal term]\label{lem:min_term}
+\lean{Weingarten.mCount_min_ne_zero}
+\leanok
+\uses{lem:exists_monotone, lem:wg_degree}
+$m_{|\sigma|}(\sigma)\ne0$, i.e.\ the count at the minimal degree $k=|\sigma|=n-c(\sigma)$
+is nonzero.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{lem:exists_monotone}
+The shortest slot-word of Lemma~\ref{lem:exists_monotone} is one factorization of
+$\sigma$ of length $|\sigma|$, so it contributes a term $\ge1$ to the count
+$m_{|\sigma|}(\sigma)=\sum_{|\kappa|=|\sigma|}c_\kappa(\sigma)$. (Formally: in
+$\mathbb N[S_n]$ a single factorization term lower-bounds the convolution coefficient,
+$\prod_i(K_i^{\mathbb N})^{\kappa_i}$ evaluated at $\sigma$ is at least the product of the
+chosen basis coefficients, all equal to $1$.)
+\end{proof}
+
+\begin{theorem}[Parity sign theorem]\label{thm:parity}
+\lean{Weingarten.wg_sign}
+\leanok
+\uses{def:wg, lem:expansion, lem:min_term}
+For $n-1<N$ and every $\sigma\in S_n$:
+\[
+(-1)^{|\sigma|}\,\Wg(\sigma,N)>0;
+\]
+in particular $\Wg(\sigma,N)\neq0$ and its sign is $\sgn(\sigma)$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:expansion, lem:min_term}
+The expansion has nonnegative terms, and the term $k=|\sigma|$ is at
+least $N^{-(n+|\sigma|)}>0$.
+\end{proof}
+
+\chapter{The cancellation ratio in closed form}\label{ch:closed}
+
+\begin{theorem}[Closed form]\label{thm:closed_form}
+\lean{Weingarten.cancellation_ratio}
+\leanok
+\uses{def:wg, thm:parity}
+For $n-1<N$:
+\[
+\sum_{\sigma}\bigl|\Wg(\sigma,N)\bigr|=\prod_{m=0}^{n-1}\frac1{N-m},
+\qquad
+\frac{\sum_\sigma\Wg(\sigma,N)}{\sum_\sigma\bigl|\Wg(\sigma,N)\bigr|}
+=\prod_{j=0}^{n-1}\frac{N-j}{N+j}.
+\]
+(Lean names: \texttt{Weingarten.sum\_abs\_wg},
+\texttt{Weingarten.cancellation\_ratio}.)
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:parity, thm:rising, thm:falling}
+By Theorem~\ref{thm:parity},
+$|\Wg(\sigma,N)|=\sgn(\sigma)\,\Wg(\sigma,N)$ (Lean: \texttt{Weingarten.abs\_wg\_eq});
+apply the two sum rules and divide.
+\end{proof}
+
+\chapter{The certified cell \texorpdfstring{$(N,n)=(2,3)$}{(N,n)=(2,3)}}\label{ch:cell}
+
+This chapter certifies, as a finite exact computation over $\Q$, the
+one below-threshold cell the development commits to --- with no general
+pseudo-inverse theory and no analysis.
+
+\begin{definition}[Gram data]\label{def:gram23}
+\lean{Weingarten.Cell23.G}
+\leanok
+\uses{def:cycleCount}
+$G:S_3\times S_3\to\Q$, $G(\sigma,\tau):=2^{\,c(\sigma^{-1}\tau)}$,
+viewed as a $6\times6$ matrix over $\Q$.
+\end{definition}
+
+\begin{definition}[Candidate Weingarten data]\label{def:w23}
+\lean{Weingarten.Cell23.W}
+\leanok
+$W(\sigma,\tau):=w(\sigma^{-1}\tau)$, where $w(\mathrm{id})=17/144$,
+$w=1/144$ on the three transpositions, and $w=-7/144$ on the two
+$3$-cycles.
+\end{definition}
+
+\begin{lemma}[Penrose uniqueness]\label{lem:penrose_unique}
+\lean{Weingarten.Cell23.penrose_unique}
+\leanok
+Over $\Q$, a matrix $W$ satisfying $GWG=G$, $WGW=W$,
+$(GW)^{\mathsf T}=GW$, and $(WG)^{\mathsf T}=WG$ is unique --- the
+standard six-line algebraic argument, valid over any commutative ring.
+\end{lemma}
+
+\begin{theorem}[The cell, certified]\label{thm:cell23}
+\lean{Weingarten.Cell23.penrose}
+\leanok
+\uses{def:gram23, def:w23}
+The pair $(G,W)$ satisfies the four Penrose identities; by
+Lemma~\ref{lem:penrose_unique}, $W$ is therefore \emph{the}
+pseudo-inverse of $G$, so the three values of Definition~\ref{def:w23}
+are the $(N,n)=(2,3)$ Weingarten values. Moreover every row of $W$ sums
+to $1/24$ and every sign-weighted row sums to $0$ --- the below-threshold
+degeneration of the falling rule. Proof route: the data is integer-valued
+up to a global $1/144$, so the Penrose equations become the $\Z$-matrix
+identities $G\,W_0\,G=144\,G$ etc., which kernel \texttt{decide} reduces
+(the rational \texttt{decide} stalls on \texttt{Rat} gcd-normalization);
+casting back through $\Z\to\Q$ recovers the statements. No
+\texttt{native\_decide}, so the trusted base is unchanged. (Lean names:
+\texttt{Weingarten.Cell23.penrose}, \texttt{Weingarten.Cell23.row\_sums};
+verified exactly by check~C6.)
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:penrose_unique}
+Finite exact computation plus Lemma~\ref{lem:penrose_unique}.
+\end{proof}
+
+\begin{definition}[Algebra-level cell data]\label{def:wcell}
+\lean{Weingarten.Cell23.Wcell}
+\leanok
+\uses{def:w23, def:symAlg}
+$\mathcal W_{2,3}:=\sum_\sigma w(\sigma)\,\delta_\sigma\in\salg{3}$ over
+$\mathbb{Q}$, with $w$ the candidate values of Definition~\ref{def:w23}.
+\end{definition}
+
+\begin{theorem}[Algebra-level Penrose certificate]\label{thm:penrose_alg}
+\lean{Weingarten.Cell23.penrose_alg}
+\leanok
+\uses{def:wcell, def:gram, def:penrose_pair, thm:cell23}
+$\mathcal W_{2,3}$ is a Penrose partner of $\mathcal G_3(2)$ over
+$\mathbb{Q}$. Proof: transport the matrix certificate of
+Theorem~\ref{thm:cell23} along the injective left-regular embedding
+$\Phi=\texttt{toMatrixAlgEquiv}\circ\texttt{Algebra.lmul}$, whose matrix of
+$\mathcal G_3(2)$ is $G$ and of $\mathcal W_{2,3}$ is $W$, using that
+$w$ and $N^{c}$ are inverse-symmetric class functions
+(\texttt{cycleCount\_mul\_inv\_comm}, \texttt{wval\_mul\_inv\_comm}).
+\end{theorem}
+
+\begin{corollary}[Cell sum rules by two routes]\label{cor:cell_rules}
+\lean{Weingarten.Cell23.row_sums_of_penrose}
+\leanok
+\uses{thm:penrose_alg, thm:rising_conditional, thm:vanish_below}
+$\varepsilon(\mathcal W_{2,3})=1/24$ and $\hat s(\mathcal W_{2,3})=0$, as
+corollaries of the conditional rules; the \texttt{decide}-route row sums
+of Theorem~\ref{thm:cell23} remain as an independent cross-check
+(check~B4).
+\end{corollary}
+
+\begin{proposition}[Average-sign anchor]\label{prop:avg_sign}
+\lean{Weingarten.Cell23.avg_sign}
+\leanok
+\uses{def:w23}
+$\bigl(\sum_\sigma w(\sigma)\bigr)/\bigl(\sum_\sigma|w(\sigma)|\bigr)
+=3/17$ --- the first below-threshold average-sign anchor,
+certified (check~B4).
+\end{proposition}
+
+\begin{proposition}[Sign-flip witness]\label{prop:sign_flip}
+\lean{Weingarten.Cell23.sign_flip}
+\leanok
+\uses{def:w23, thm:sign_breakdown}
+The transposition $\swap{0}{1}$ has $\sgn=-1$ and $w>0$: the concrete
+instance of the forced breakdown.
+\end{proposition}
+
+\begin{corollary}[Cell Gram singularity]\label{cor:gram_two_singular}
+\lean{Weingarten.Cell23.gram_two_not_isUnit}
+\leanok
+\uses{thm:gram_singular}
+$\mathcal G_3(2)$ is not a unit (instance of
+Theorem~\ref{thm:gram_singular}; numerically $\det G=0$, check~B3b).
+\end{corollary}
+
+\begin{corollary}[Uniqueness characterization]\label{cor:cell_unique}
+\lean{Weingarten.Cell23.pseudoinverse_unique}
+\leanok
+\uses{lem:penrose_unique, thm:cell23}
+Any matrix satisfying the four transpose-form Penrose equations for $G$
+equals $W$: the certified values are \emph{the} $(2,3)$ Weingarten data.
+\end{corollary}
+
+\chapter{Pair partitions: loops, crossings, and the twisted vectors}\label{ch:pairings}
+
+This chapter and the two that follow develop the orthogonal and symplectic
+analogues of the below-threshold package, fully proved in Lean: every
+declaration carries \texttt{leanok} and is \emph{sorry}-free and axiom-clean, the
+informal proofs are recorded here in full, and every
+identity is pinned in exact rational arithmetic by the suites in
+\texttt{scripts/} (BO1--BO4, PL1--PL8, A1--A8, PS1--PS6, PF0--PF4). The
+complete prior-art ledger is maintained with the project's local
+records; the attribution paragraphs below summarize it.
+As everywhere in this blueprint, absence from our searches is \emph{not} a
+novelty claim --- reference requests are outstanding.
+
+Pair partitions of $\{0,\dots,2n-1\}$ are encoded as fixed-point-free
+involutions, written $\mathcal P_2(2n)$; the unitary chapters' permutation
+combinatorics is reused through the bridge lemma
+(Lemma~\ref{lem:loops_q_q}).
+
+\begin{definition}[Pair partition]\label{def:pairing}
+\lean{Weingarten.Pairing}
+\leanok
+A \emph{pairing} of $\mathrm{Fin}\,(2n)$ is a fixed-point-free involution
+$p$ of $\mathrm{Fin}\,(2n)$; the canonical \emph{chords} of $p$ are the
+pairs $(a, p\,a)$ with $a < p\,a$. There are $(2n-1)!!$ pairings.
+\end{definition}
+
+\begin{definition}[Loops]\label{def:loops}
+\lean{Weingarten.Pairing.loops}
+\leanok
+\uses{def:pairing, def:cycleCount}
+For pairings $p,q$, the union of their chord systems decomposes into closed
+loops; $\ell(p,q)$ is their number, equal to $c(pq)/2$ with $c$ the full
+cycle count of Definition~\ref{def:cycleCount} (each loop of $2m$ points
+contributes two $m$-cycles to the product $pq$).
+\end{definition}
+
+\begin{definition}[Crossings]\label{def:crossings}
+\lean{Weingarten.Pairing.crossings}
+\leanok
+\uses{def:pairing}
+$\mathrm{cr}(p)$ is the number of pairs of chords $(a,p\,a)$, $(c,p\,c)$
+with $a < c < p\,a < p\,c$ --- the crossing number of the chord diagram.
+\end{definition}
+
+\begin{definition}[Crossing parity]\label{def:eps_sign}
+\lean{Weingarten.epsSign}
+\leanok
+\uses{def:crossings}
+$\varepsilon(p) := (-1)^{\mathrm{cr}(p)}$.
+\end{definition}
+
+\begin{definition}[Permutation-like pairings]\label{def:q_pairing}
+\lean{Weingarten.qPair}
+\leanok
+\uses{def:pairing}
+For $\rho\in S_n$, $q_\rho$ is the pairing matching $a \leftrightarrow
+n+\rho(a)$ for $a < n$. These are exactly the pairings with no chord inside
+$\{0,\dots,n-1\}$ or inside $\{n,\dots,2n-1\}$.
+\end{definition}
+
+\begin{lemma}[Injectivity]\label{lem:q_pairing_inj}
+\lean{Weingarten.qPair_injective}
+\leanok
+\uses{def:q_pairing}
+$\rho\mapsto q_\rho$ is injective.
+\end{lemma}
+
+\begin{lemma}[Bridge to the unitary cycle count]\label{lem:loops_q_q}
+\lean{Weingarten.loops_qPair_qPair}
+\leanok
+\uses{def:q_pairing, def:loops, def:cycleCount}
+$\ell(q_\tau, q_\rho) = c(\tau^{-1}\rho)$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+Write the $2n$ points as a \emph{top} block $\{0,\dots,n-1\}$ and a
+\emph{bottom} block $\{n,\dots,2n-1\}$. By definition (Def.~\ref{def:q_pairing})
+every chord of $q_\rho$ joins a top point $a$ to the bottom point $n+\rho(a)$,
+and involutivity forces the partner formula $q_\rho(n+b)=\rho^{-1}(b)$. Thus
+every vertex carries one cross-chord of $q_\tau$ and one of $q_\rho$, so each
+joint loop of the union alternates between top and bottom and visits at least
+one top point.
+
+\medskip
+\noindent\emph{The step map on top points.} Trace a loop from a top point
+$a$, traversing first the $q_\tau$-chord and then the $q_\rho$-chord:
+\[
+  a\ \xrightarrow{\,q_\tau\,}\ n+\tau(a)
+   \ \xrightarrow{\,q_\rho\,}\ q_\rho\bigl(n+\tau(a)\bigr)
+   =\rho^{-1}\bigl(\tau(a)\bigr)=(\rho^{-1}\tau)(a).
+\]
+One full $q_\tau$-then-$q_\rho$ step returns to the top block and acts as
+$a\mapsto(\rho^{-1}\tau)(a)$. Iterating, the top points met along the loop
+through $a$ are exactly the orbit $a,(\rho^{-1}\tau)(a),(\rho^{-1}\tau)^2(a),\dots$
+of $a$ under $\rho^{-1}\tau\in S_n$; the loop closes exactly when this orbit
+closes (the bottom points $n+\tau(x)$ are determined by the top ones).
+
+\medskip
+\noindent\emph{Loops correspond to orbits.} The joint loops partition all
+$2n$ points, hence partition the top block. By the step map the top points of
+each loop form one orbit of $\rho^{-1}\tau$, and conversely every orbit is
+realized by exactly one loop. This bijection gives
+$\ell(q_\tau,q_\rho)=c(\rho^{-1}\tau)$. Finally $\rho^{-1}\tau$ and
+$\tau^{-1}\rho=(\rho^{-1}\tau)^{-1}$ are mutually inverse, and a permutation and
+its inverse have identical orbits, so $c(\rho^{-1}\tau)=c(\tau^{-1}\rho)$ and
+$\ell(q_\tau,q_\rho)=c(\tau^{-1}\rho)$.
+
+\medskip\noindent\emph{Reduced form.} Rather than trace loops one at a time,
+\texttt{loops\_qPair\_qPair} computes the product permutation in one shot: through
+the block isomorphism \texttt{pairEquiv} the underlying \texttt{swapAcrossPerm}
+of $q_\tau\,q_\rho$ is the block-diagonal $\mathrm{sumCongr}(\tau^{-1}\rho,\,\tau\rho^{-1})$
+(the two blocks are the top step map and its bottom mirror). Its cycle count
+splits additively as $c(\tau^{-1}\rho)+c(\tau\rho^{-1})$, and the
+inverse-symmetry lemma \texttt{cycleCount\_mul\_inv\_comm} identifies the two
+summands, giving $2\,c(\tau^{-1}\rho)$; since $\ell$ is half the joint cycle
+count, an \texttt{omega} halving closes the goal. This replaces the explicit
+loop/orbit bijection (and the $n=4$ exhaustive check PL1) by an algebraic
+cycle-type computation.
+\end{proof}
+
+\begin{definition}[Determinant vector]\label{def:det_vector}
+\lean{Weingarten.detVec}
+\leanok
+\uses{def:q_pairing}
+$v\in k^{\mathcal P_2(2n)}$ has $v_{q_\rho} = \sgn(\rho)$ and $v_p = 0$ for
+$p$ not permutation-like.
+\end{definition}
+
+\begin{definition}[The $\varepsilon$ vector]\label{def:eps_vector}
+\lean{Weingarten.epsVec}
+\leanok
+\uses{def:eps_sign}
+$\varepsilon\in k^{\mathcal P_2(2n)}$ has entries
+$\varepsilon_p = (-1)^{\mathrm{cr}(p)}$.
+\end{definition}
+
+\begin{definition}[Canonical word]\label{def:canonical_word}
+\lean{Weingarten.canonicalWord}
+\leanok
+\uses{def:pairing}
+The \emph{canonical word} of $p$ is the permutation sending
+$(0,1,2,3,\dots)$ to $(a_0,b_0,a_1,b_1,\dots)$ where $(a_i,b_i)$ are the
+chords listed with $a_i<b_i$ and $a_0<a_1<\cdots$.
+\end{definition}
+
+\begin{lemma}[Pfaffian sign identity]\label{lem:sign_canonical_word}
+\lean{Weingarten.sign_canonicalWord}
+\leanok
+\uses{def:canonical_word, def:crossings}
+$\sgn(\text{canonical word of }p) = (-1)^{\mathrm{cr}(p)}$. This is the
+sign with which $p$ enters the Pfaffian expansion.
+\end{lemma}
+
+\begin{proof}\leanok
+\uses{def:canonical_word, def:crossings}
+The argument is a non-inductive inversion count. By the Mathlib fact
+$\sgn(\sigma)=(-1)^{\inv(\sigma)}$ (used through \texttt{sign\_eq\_prod\_prod\_Iio},
+which writes $\sgn(\sigma)$ as the product over ordered position pairs $s<t$ of the
+per-pair inversion sign), it suffices to evaluate the inversion sign of
+$\sigma=\text{canonicalWord}\,p$. We do this in closed form, never recursing on $n$.
+
+\medskip\noindent\emph{Reindexing positions by chord coordinates.}
+List the $n$ canonical chords as $(a_0,b_0),\dots,(a_{n-1},b_{n-1})$ with $a_k<b_k$ and,
+by the canonical listing, with left endpoints sorted $a_0<a_1<\cdots<a_{n-1}$
+(Def.~\ref{def:canonical_word}). The canonical word has value sequence
+$(a_0,b_0,a_1,b_1,\dots)$, i.e.\ $\sigma(2k)=a_k$ and $\sigma(2k+1)=b_k$, so a position
+is encoded by a pair $(\text{chord index},\text{slot})\in\mathrm{Fin}\,n\times\mathrm{Fin}\,2$.
+Grouping the product over position pairs by the pair of chords $(i,j)$ they involve, the
+four cross-slot comparisons of chords $i<j$ multiply to a single chord factor
+$(-1)^{\mathrm{crossInd}(i,j)}$.
+
+\medskip\noindent\emph{The per-chord-pair case split.}
+Fix $i<j$. All four positions of chord $i$ precede those of chord $j$, so the only
+inversions among them come from the four cross-slot pairs with values $(a_i,a_j)$,
+$(a_i,b_j)$, $(b_i,a_j)$, $(b_i,b_j)$. Since $a_i<a_j$ (sorted left endpoints) and
+$a_i<b_i$, $a_j<b_j$, the value $a_i$ is the global minimum, so the pairs starting from
+$a_i$ are never inversions. The remaining freedom is the position of $b_i$ relative to
+$a_j<b_j$, giving exactly three exclusive configurations (all $2n$ endpoints distinct):
+\[
+  \begin{array}{lll}
+    \textbf{disjoint } (a_i<b_i<a_j<b_j) & \Rightarrow & 0\ \text{inversions};\\[2pt]
+    \textbf{crossing } (a_i<a_j<b_i<b_j) & \Rightarrow & 1\ \text{inversion};\\[2pt]
+    \textbf{nesting } (a_i<a_j<b_j<b_i) & \Rightarrow & 2\ \text{inversions}.
+  \end{array}
+\]
+Thus the chord factor is $(-1)^{\mathrm{crossInd}(i,j)}$ with
+$\mathrm{crossInd}(i,j)=1$ exactly in the crossing case $a_i<a_j<b_i<b_j$, and $0$
+otherwise (out-of-order pairs $j\le i$ also contribute $1$, i.e.\ no sign).
+
+\medskip\noindent\emph{Summation and the order-isomorphism bridge.}
+Multiplying over all chord pairs,
+\[
+  \sgn(\sigma)=\prod_{i,j}(-1)^{\mathrm{crossInd}(i,j)}
+  =(-1)^{\sum_{i,j}\mathrm{crossInd}(i,j)}.
+\]
+Finally $\sum_{i,j}\mathrm{crossInd}(i,j)=\mathrm{cr}(p)$ (Def.~\ref{def:crossings}):
+the left-endpoint embedding $i\mapsto a_i$ is a strictly increasing injection onto the
+left endpoints, hence an order isomorphism, so it carries the chord-index crossing
+condition $i<j\wedge a_i<a_j<b_i<b_j$ bijectively onto the endpoint crossing condition
+defining $\mathrm{cr}(p)$. The nesting pairs, contributing the even count $2$ each, drop
+out of the parity, leaving $\sgn(\sigma)=(-1)^{\mathrm{cr}(p)}=\varepsilon(p)$.
+(Exhaustive machine check: PS1, all pairings through $n=5$.)
+
+\medskip\noindent\emph{Reduced form.} \texttt{sign\_canonicalWord} runs exactly this
+route: \texttt{sign\_chord} rewrites $\sgn(\text{canonicalWord}\,p)$ as
+$\prod_i\prod_j \texttt{chordFactor}\,i\,j$, then \texttt{chordFactor\_eq\_pow} discharges
+the three-way case split (crossing $\mapsto -1$, nesting $\mapsto +1$, disjoint/out-of-order
+$\mapsto 1$) to give $\texttt{chordFactor}=(-1)^{\mathrm{crossInd}}$. Two applications of
+\texttt{Finset.prod\_pow\_eq\_pow\_sum} collapse the double product to
+$(-1)^{\sum_{i,j}\mathrm{crossInd}}$, and \texttt{sum\_crossInd\_eq\_crossings} supplies the
+order-isomorphism bridge as a \texttt{Finset.card\_bij} along \texttt{leftEndEmb}, finishing
+without any induction on $n$.
+\end{proof}
+
+\chapter{The orthogonal Gram and its below-threshold package}\label{ch:orthogonal}
+
+The orthogonal Weingarten convention follows Collins--\'Sniady
+(\emph{Comm. Math. Phys.} \textbf{264} (2006), 773--795): the Gram data on
+pairings has entries $N^{\ell(p,q)}$ and the Weingarten data is its
+pseudo-inverse. Zinn-Justin (arXiv:0907.2719) and Matsumoto
+(arXiv:1001.2345) realize this Gram as a
+product of odd Jucys--Murphy shifts on the pairing module, with zonal
+spectrum $\prod_{(i,j)\in\lambda}(N+2j-1-i)$; Matsumoto (arXiv:1004.4717)
+records the general-parameter function and tables (our exact $n=2$ values
+match his Example~1 verbatim), with the convolution-inverse identity
+attributed to Collins--Matsumoto (arXiv:0903.5143). The signed sum
+\emph{above} threshold is in print: Campbell--Yin (arXiv:1907.01009) display
+the quadrature value $(d-n)!/d!$ via the zonal evaluation
+$\sum_\sigma\sgn(\sigma)\,\omega^\lambda(\sigma) =
+((n+1)!/2^n)\,\delta_{\lambda,1^n}$, an instance of the
+Marcus--Spielman--Srivastava minor-orthogonality phenomenon; the bookend
+zonal values are Macdonald VII.2.2(b) and VII.2.25. What we have \emph{not}
+located displayed: the below-threshold vanishing as a stated identity, the
+absorption identities in eigenrelation form, and the Penrose-conditional
+route --- all presumed routine; the reference request covers them. The
+proofs below are complete and elementary; suites BO1--BO4 and PL1--PL8
+check every step exhaustively through $n=4$ (the $105\times105$ cell
+included) in exact arithmetic.
+
+\begin{definition}[Orthogonal Gram matrix]\label{def:orth_gram}
+\lean{Weingarten.orthGram}
+\leanok
+\uses{def:pairing, def:loops}
+$G^{\mathrm O}_n(N)\in k^{\mathcal P_2(2n)\times\mathcal P_2(2n)}$ has
+entries $G^{\mathrm O}_n(N)_{pq} = N^{\ell(p,q)}$, for any commutative ring
+$k$ and any $N\in k$.
+\end{definition}
+
+\begin{definition}[Even-rising factorial]\label{def:even_rising}
+\lean{Weingarten.evenRising}
+\leanok
+$r_n(N) := N(N+2)\cdots(N+2n-2)$.
+\end{definition}
+
+\begin{definition}[Falling factorial]\label{def:falling_fact}
+\lean{Weingarten.fallingFact}
+\leanok
+$f_n(N) := N(N-1)\cdots(N-n+1)$.
+\end{definition}
+
+\begin{theorem}[All-ones absorption]\label{thm:orth_ones_absorb}
+\lean{Weingarten.orthGram_mulVec_one}
+\leanok
+\uses{def:orth_gram, def:even_rising}
+$G^{\mathrm O}_n(N)\,\mathbf 1 = r_n(N)\,\mathbf 1$.
+\end{theorem}
+
+\begin{proof}\leanok
+\uses{def:orth_gram, def:even_rising, def:loops}
+The $p$-th entry of $G^{\mathrm O}_n(N)\,\mathbf 1$ is the row sum
+$R_n(N):=\sum_{q\in\mathcal P_2(2n)}N^{\ell(p,q)}$ (Def.~\ref{def:loops},
+Def.~\ref{def:orth_gram}). We show $R_n(N)$ is independent of $p$ and equals
+the even-rising factorial $r_n(N)=N(N+2)\cdots(N+2n-2)$.
+
+\emph{Constancy.} $S_{2n}$ acts on $\mathcal P_2(2n)$ by relabeling
+$g\cdot p:=g\,p\,g^{-1}$, again a fixed-point-free involution. All such
+involutions have cycle type $2^n$, so the action is transitive, and the
+chord union of $(g\cdot p,g\cdot q)$ is the $g$-image of that of $(p,q)$,
+whence $\ell(g\cdot p,g\cdot q)=\ell(p,q)$. Reindexing the sum by
+$q=g\cdot q'$ gives
+$\sum_q N^{\ell(g\cdot p,q)}=\sum_{q'}N^{\ell(g\cdot p,g\cdot q')}
+=\sum_{q'}N^{\ell(p,q')}$, so the row sum at $g\cdot p$ equals that at $p$.
+By transitivity every row sum coincides; write the common value $R_n(N)$.
+
+\emph{Recursion.} $R_0(N)=1$: $\mathcal P_2(0)$ has the single empty
+pairing with term $N^0=1$. For $n\ge1$ fix $p$, distinguish a point $z$ with
+$p$-partner $w:=p(z)$, and sum over $q$ by conditioning on $y:=q(z)$.
+If $y=w$ then $\{z,w\}$ is a double edge, a $2$-loop on its own;
+deleting $z,w$ identifies $q$ with an arbitrary pairing of the remaining
+$2n-2$ points and gives $\ell(p,q)=1+\ell(p\!\restriction,q\!\restriction)$,
+so this case contributes $N\cdot R_{n-1}(N)$. For each of the $2n-2$ choices
+$y\ne w$ (the splice), put $u:=p(y)$; the four points $z,w,y,u$ are
+distinct, and in the chord union $z,y$ are interior degree-two vertices on
+the path $w\overset{p}{-}z\overset{q}{-}y\overset{p}{-}u$. Replacing the
+$p$-chords $\{z,w\},\{y,u\}$ by the single chord $\{w,u\}$ and deleting
+$z,y$ contracts these two degree-two vertices --- a homeomorphism of the
+$1$-complex --- so the loop count is unchanged,
+$\ell(p,q)=\ell(\tilde p,\tilde q)$ (in the boundary case $q(u)=w$ the
+$4$-loop becomes a $2$-loop, still one loop; $\{z,w\}$ is never a double
+edge here since $q(z)=y\ne w$). As $q$ ranges over pairings with $q(z)=y$,
+its restriction ranges over all pairings of the $2n-2$ points, contributing
+$R_{n-1}(N)$ by constancy at level $n-1$. Summing the two cases,
+\[
+  R_n(N)=N\,R_{n-1}(N)+(2n-2)\,R_{n-1}(N)=(N+2n-2)\,R_{n-1}(N).
+\]
+Iterating from $R_0=1$ yields
+$R_n(N)=\prod_{j=1}^n(N+2j-2)=r_n(N)$ (Def.~\ref{def:even_rising}). Every
+entry of $G^{\mathrm O}_n(N)\,\mathbf 1$ thus equals $r_n(N)$. As both sides
+are integer-coefficient polynomials in $N$, the identity holds over any
+commutative ring. (Machine check: PL5 through $n=5$, $945$ pairings.)
+
+\medskip
+\noindent\emph{Reduced form.} \texttt{orthGram\_mulVec\_one} reduces each
+entry to \texttt{rowSum} via \texttt{rowSum\_eq} and then evaluates it by
+\texttt{rowSum\_eq\_evenRising}. Constancy is \texttt{rowSum\_const}: any two
+pairings are conjugate (\texttt{pairing\_isConj}), and the conjugation
+bijection \texttt{conjPEquiv} reindexes the sum while \texttt{loops\_conjP}
+preserves the exponent. The recursion \texttt{rowSum\_succ} distinguishes the
+point $0$ and splits $\mathcal P_2(2(m+1))$ along the bijection
+\texttt{biEquiv} into the close fiber (\texttt{closeP}, with
+\texttt{loops\_closeP} giving the extra factor $N$) and the splice fiber
+indexed by $\mathrm{Fin}\,2m\times\mathcal P_2(2m)$ (\texttt{spliceP}, with
+\texttt{loops\_spliceP} giving loop-count invariance); each fiber sums to
+\texttt{rowSum}$_m$, and \texttt{ring} assembles $(N+2m)\,$\texttt{rowSum}$_m$.
+The base $r_0=1$ is \texttt{rowSum\_zero}.
+\end{proof}
+
+\begin{theorem}[Determinant-vector absorption]\label{thm:orth_det_absorb}
+\lean{Weingarten.orthGram_mulVec_detVec}
+\leanok
+\uses{def:orth_gram, def:det_vector, def:falling_fact, lem:loops_q_q, lem:gram_eval}
+$G^{\mathrm O}_n(N)\,v = f_n(N)\,v$.
+\end{theorem}
+
+\begin{proof}\leanok
+\uses{def:orth_gram, def:det_vector, def:falling_fact, lem:loops_q_q, lem:gram_eval}
+The $p$-th entry of $G^{\mathrm O}_n(N)\,v$ is
+\[
+  (G^{\mathrm O}v)_p=\sum_{q}N^{\ell(p,q)}\,v_q
+  =\sum_{\rho\in S_n}\sgn(\rho)\,N^{\ell(p,\,q_\rho)},
+\]
+the sum collapsing to the permutation-like rows $q=q_\rho$ because $v$
+vanishes elsewhere (Def.~\ref{def:det_vector}). We show
+$(G^{\mathrm O}v)_p=f_n(N)\,v_p$ for every row $p$, in two cases.
+
+\medskip
+\noindent\textbf{On the permutation block: $p=q_\tau$.}
+By the bridge lemma~\ref{lem:loops_q_q}, $\ell(q_\tau,q_\rho)=c(\tau^{-1}\rho)$.
+Substituting $\pi:=\tau^{-1}\rho$ (a bijection of $S_n$ as $\rho$ varies, so
+$\rho=\tau\pi$ and $\sgn(\rho)=\sgn(\tau)\sgn(\pi)$) gives
+\[
+  (G^{\mathrm O}v)_{q_\tau}
+  =\sum_{\rho}\sgn(\rho)\,N^{c(\tau^{-1}\rho)}
+  =\sgn(\tau)\sum_{\pi}\sgn(\pi)\,N^{c(\pi)}
+  =\sgn(\tau)\,f_n(N),
+\]
+the last equality being the signed character of the Gram element
+(Lemma~\ref{lem:gram_eval}, $\sum_{\pi}\sgn(\pi)\,N^{c(\pi)}=f_n(N)$). Since
+$v_{q_\tau}=\sgn(\tau)$ this equals $f_n(N)\,v_{q_\tau}$, as required.
+
+\medskip
+\noindent\textbf{Off the block: $p$ not permutation-like.}
+Then $v_p=0$, so it suffices to show
+$(G^{\mathrm O}v)_p=\sum_\rho\sgn(\rho)\,N^{\ell(p,q_\rho)}=0$.
+\emph{(Block balance.)} Writing $t,s,x$ for the numbers of top-internal,
+bottom-internal, and cross chords of $p$, counting the $n$ top and the $n$
+bottom points gives $2t+x=n=2s+x$, hence $t=s$; so $p$ is permutation-like
+iff $t=0$, and otherwise $t=s\ge1$ and $p$ has a top-internal chord
+$\{a,b\}\subseteq\{0,\dots,n-1\}$, $a\neq b$. Fix it and consider the involution
+\[
+  \iota:S_n\to S_n,\qquad \iota(\rho)=\rho\circ\swap{a}{b}.
+\]
+It is fixed-point-free with $\iota\circ\iota=\mathrm{id}$ ($\swap{a}{b}\ne\mathrm{id}$),
+and sign-reversing: $\sgn(\iota(\rho))=\sgn(\rho)\,\sgn(\swap{a}{b})=-\sgn(\rho)$.
+We claim it preserves the loop count,
+\begin{equation}\label{eq:orth_loopeq}
+  \ell(p,\,q_{\iota(\rho)})=\ell(p,\,q_\rho).
+\end{equation}
+Writing $\rho':=\iota(\rho)$, the pairings $q_\rho,q_{\rho'}$ differ only in the two
+chords at $a,b$: $\{a,n+\rho(a)\},\{b,n+\rho(b)\}$ versus
+$\{a,n+\rho(b)\},\{b,n+\rho(a)\}$. In the chord union with $p$ the fixed
+$p$-chord $\{a,b\}$ makes $a,b$ interior degree-two vertices of a path with the
+\emph{same} unordered endpoints $\{n+\rho(a),n+\rho(b)\}$ in both unions, only
+``crossed.'' Since $a,b$ are top points while $q_\rho,q_{\rho'}$ send them to
+bottom points, $\{a,b\}$ is never a double edge, so the path has length
+$\ge3$ with distinct endpoints; contracting the two degree-two vertices
+replaces each path by the same single edge $n+\rho(a)\!-\!n+\rho(b)$ and leaves
+all other chords untouched. Contraction of degree-two vertices preserves the
+loop count, giving \eqref{eq:orth_loopeq}. The orbits $\{\rho,\rho'\}$ of
+$\iota$ then cancel in pairs:
+$\sgn(\rho)N^{\ell(p,q_\rho)}+\sgn(\rho')N^{\ell(p,q_{\rho'})}=0$, so
+$(G^{\mathrm O}v)_p=0=f_n(N)\,v_p$.
+
+\medskip
+Both cases give $(G^{\mathrm O}v)_p=f_n(N)\,v_p$, hence
+$G^{\mathrm O}_n(N)\,v=f_n(N)\,v$. Both sides are polynomial in $N$, so the
+identity holds over any commutative ring.
+
+\medskip\noindent\emph{Reduced form.} \texttt{orthGram\_mulVec\_detVec} does
+\texttt{funext p} and a \texttt{by\_cases} on whether $p=q_\tau$. The on-block
+entry is \texttt{mulVec\_detVec\_perm\_case}: rewrite to the signed loop sum
+(\texttt{mulVec\_detVec\_entry}), apply the bridge
+\texttt{loops\_qPair\_qPair} (Lemma~\ref{lem:loops_q_q}), reindex by
+\texttt{Equiv.mulLeft}~$\tau$ to peel off $\sgn(\tau)$, and close with the Gram
+character \texttt{sum\_sgn\_pow\_cycleCount} (Lemma~\ref{lem:gram_eval}). The
+off-block entry is \texttt{signed\_loop\_sum\_eq\_zero}: \texttt{exists\_topchord}
+supplies $\{a,b\}$ via the block-balance count, then
+\texttt{Finset.sum\_involution} on $\rho\mapsto\rho\cdot\swap{a}{b}$ finishes, its
+loop-invariance hypothesis being \texttt{loops\_preserved} (a conjugation
+\texttt{cycleCount\_conj} realizing the degree-two contraction) and its sign
+flip \texttt{Equiv.Perm.sign\_swap}.
+\end{proof}
+
+\begin{definition}[Commuting Penrose partner]\label{def:comm_penrose}
+\lean{Weingarten.IsCommPenrosePartner}
+\leanok
+Matrices $G, W$ are \emph{commuting Penrose partners} if $GWG=G$, $WGW=W$,
+and $WG=GW$. This is the matrix-level analogue of
+Definition~\ref{def:penrose_pair}; the commutation, automatic in the
+one-algebra setting of Chapter~\ref{ch:below}, is added as a hypothesis
+here and holds for the Moore--Penrose inverse of a symmetric matrix and for
+every polynomial-in-$G$ partner.
+\end{definition}
+
+\begin{lemma}[Two-line evaluation]\label{lem:orth_two_line}
+\lean{Weingarten.vecMul_detVec_two_line}
+\leanok
+\uses{def:comm_penrose, thm:orth_det_absorb}
+If $W$ is a commuting Penrose partner of $G = G^{\mathrm O}_n(N)$ then
+$v^{\mathsf T}W = f_n(N)\,\bigl(v^{\mathsf T}W^2\bigr)$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+$v^{\mathsf T}W = v^{\mathsf T}(WGW) = v^{\mathsf T}GW^2
+= (Gv)^{\mathsf T}W^2 = f_n(N)\,v^{\mathsf T}W^2$, using $WGW=W$, the
+commutation, the symmetry of $G$, and Theorem~\ref{thm:orth_det_absorb}.
+\end{proof}
+
+\begin{theorem}[Exact vanishing of the signed sums]\label{thm:orth_det_vanish}
+\lean{Weingarten.vecMul_detVec_eq_zero}
+\leanok
+\uses{lem:orth_two_line}
+If $f_n(N)=0$ --- in particular at every integer $1\le N\le n-1$ --- then
+$v^{\mathsf T}W = 0$ for every commuting Penrose partner $W$: all signed
+determinant sums of the orthogonal Weingarten data vanish exactly.
+\end{theorem}
+
+\begin{proof}
+\leanok
+Immediate from Lemma~\ref{lem:orth_two_line}. (Machine check: BO4 at
+$n=3$, $N=1,2$, with Penrose-certified exact pseudo-inverses.)
+\end{proof}
+
+\begin{theorem}[Kernel witness]\label{thm:orth_ker_witness}
+\lean{Weingarten.orthGram_mulVec_detVec_eq_zero}
+\leanok
+\uses{thm:orth_det_absorb}
+If $f_n(N)=0$ then $G^{\mathrm O}_n(N)\,v = 0$.
+\end{theorem}
+
+\begin{theorem}[Gram singularity below threshold]\label{thm:orth_not_unit}
+\lean{Weingarten.not_isUnit_orthGram}
+\leanok
+\uses{thm:orth_ker_witness}
+If $f_n(N)=0$ and $v\ne 0$ then $G^{\mathrm O}_n(N)$ is not invertible;
+the invertibility threshold over the integers is $N\ge n$.
+\end{theorem}
+
+\begin{theorem}[Conditional even-rising rule]\label{thm:orth_rising_rule}
+\lean{Weingarten.evenRising_smul_vecMul_one}
+\leanok
+\uses{def:comm_penrose, thm:orth_ones_absorb}
+If $G^{\mathrm O}_n(N)$ is invertible and $W$ is a commuting Penrose
+partner, then $r_n(N)\,\mathbf 1^{\mathsf T}W = \mathbf 1^{\mathsf T}$:
+every row sum of the orthogonal Weingarten data is $1/r_n(N)$.
+\end{theorem}
+
+\begin{proof}
+\leanok
+$GWG=G$ with $G$ invertible forces $W=G^{-1}$, and
+$\mathbf 1^{\mathsf T} = \mathbf 1^{\mathsf T}GG^{-1}
+= r_n(N)\,\mathbf 1^{\mathsf T}G^{-1}$ by symmetry and
+Theorem~\ref{thm:orth_ones_absorb}.
+\end{proof}
+
+\begin{theorem}[Conditional falling rule]\label{thm:orth_falling_rule}
+\lean{Weingarten.fallingFact_smul_vecMul_detVec}
+\leanok
+\uses{def:comm_penrose, thm:orth_det_absorb}
+Under the same hypotheses,
+$f_n(N)\,v^{\mathsf T}W = v^{\mathsf T}$: the signed determinant sums
+invert the falling factorial above threshold, matching the displayed
+Campbell--Yin value.
+\end{theorem}
+
+\begin{remark}[Integral reading]\label{rem:orth_integral}
+\uses{thm:orth_det_vanish}
+For Haar $O\in\mathrm O(N)$ and $A$ the top-left $n\times n$ corner,
+$E[(\det A)^2] = n!\,\bigl(v^{\mathsf T}\mathrm{Wg}\bigr)_{q_{\mathrm{id}}}
+= n!/f_n(N)$ above threshold; below threshold the corner has rank
+$\le N<n$, the determinant vanishes pointwise, and
+Theorem~\ref{thm:orth_det_vanish} is exactly the Weingarten shadow of that
+rank deficiency. The \emph{orthogonal} Haar moment formula itself remains out
+of Lean scope (Chapter~\ref{ch:boundary}): the machine-checked Haar
+bridge (Chapter~\ref{ch:haar}) now
+in-repo under \texttt{Weingarten/Haar/} covers $\mathrm U(N)$ at the formalized
+degrees only, so this reading is still recorded as prose only.
+\end{remark}
+
+\chapter{The symplectic Gram: crossing-sign factorization and the role swap}\label{ch:symplectic}
+
+The symplectic series $\mathrm{Sp}(M)\subset\mathrm U(2M)$ is conventionally
+reached from the orthogonal one by a parameter twist. The one-argument
+relation $\mathrm{Wg}^{\mathrm{Sp}}(\sigma,M) = \pm\,\mathrm{Wg}^{\mathrm O}(\sigma,-2M)$
+on the Weingarten function is in print --- Redelmeier (arXiv:1412.0646,
+Remark~6.8) gives the sign as $(-1)^{n/2}$, Coulter--Do (arXiv:2506.04002,
+Remark~2.13) as a $\pm$ --- and the negative-dimension duality
+$\mathrm{Sp}(M)\leftrightarrow\mathrm O(-2M)$ is a classical genre. A
+\emph{two-argument}, Gram-level symplectic statement is also in print:
+Matsumoto (arXiv:1301.5401, \S2.3.2) builds the symplectic Weingarten
+function through the twisted Gelfand pair $(S_{2k},H_k,\varepsilon)$, with
+$T^{\mathrm{Sp}}(\sigma;z)=(-1)^k\varepsilon(\sigma)(-2z)^{\ell(\mu)}$
+($\varepsilon$ the signature), $\mathrm{Wg}^{\mathrm{Sp}}$ its pseudo-inverse
+(eq.~(2.8)), and $\mathrm{Wg}^{\mathrm{Sp}}(\sigma;z) =
+(-1)^k\varepsilon(\sigma)\,\mathrm{Wg}^{\mathrm O}(\sigma;-2z)$; his
+Theorem~2.4 and eq.~(2.15) display the Gram itself as the matrix of
+$J$-contractions $\mathrm G=(T^{\mathrm{Sp}}(\sigma^{-1}\tau))$ (eq.~(2.14):
+$T_\sigma(J,J)=T^{\mathrm{Sp}}(\sigma;n)$). Redelmeier's Definition~6.7 gives
+a second two-argument form $\mathrm{Gr}(\pi_+,\pi_-) =
+(-1)^{n/2}(-2N)^{\#(\pi_+\vee\pi_-)}$, but with a \emph{uniform} sign, the
+per-pairing crossing parity absorbed into the basis. What we provide is
+therefore not the object but an elementary, character/zonal-free \emph{proof}
+of it: the \emph{canonical-contraction} form $\mathrm G^{\mathrm{Sp}}(\pi,\sigma) =
+\varepsilon(\pi)\varepsilon(\sigma)(-1)^n(-2M)^{\#\mathrm{loop}(\pi,\sigma)}$
+(the factorization below), with the crossing parity $\varepsilon$ exposed
+entrywise (Matsumoto's quotient signature $\varepsilon(\sigma^{-1}\tau)$
+factored via the homomorphism property, the canonical representative's
+signature identified with the crossing parity). What we have not located
+displayed separately is this crossing-parity-exposed presentation, the
+below-threshold $\varepsilon$-row vanishing, or the expected-Pfaffian
+compression formula of Remark~\ref{rem:symp_integral}. No novelty is
+inferred; the design note carries the ledger. Ground truth: all $256$
+degree-four and all $4096$ degree-six Haar moments of
+$\mathrm{Sp}(1)=\mathrm{SU}(2)$, integrated exactly, match the Weingarten
+formula built on this Gram (suite A5); the crossing-sign argument is
+given in full at Theorem~\ref{thm:crossing_sign} below, pinned by
+suites PS1--PS6 and PF0--PF4.
+
+\begin{definition}[Standard form]\label{def:j_form}
+\lean{Weingarten.Jform}
+\leanok
+$J$ on $\mathrm{Fin}\,(2M)$ has $J_{x,x+M}=1$, $J_{x+M,x}=-1$, all other
+entries $0$; $J^2=-1$.
+\end{definition}
+
+\begin{definition}[Canonical contraction]\label{def:delta_contr}
+\lean{Weingarten.deltaContr}
+\leanok
+\uses{def:j_form, def:pairing}
+For a pairing $p$ and an index function
+$i:\mathrm{Fin}\,(2n)\to\mathrm{Fin}\,(2M)$,
+$\Delta'_p(i) := \prod_{(a,\,p\,a),\,a<p\,a} J_{i(a),\,i(p\,a)}$ --- the
+product over canonical chords, well defined without any word choice.
+\end{definition}
+
+\begin{definition}[Symplectic Gram, contraction form]\label{def:symp_gram_contr}
+\lean{Weingarten.sympGramContr}
+\leanok
+\uses{def:delta_contr}
+$G^{\mathrm{Sp}}_{pq} := \sum_i \Delta'_p(i)\,\Delta'_q(i)$, the sum over
+all index functions.
+\end{definition}
+
+\begin{definition}[Symplectic Gram, closed form]\label{def:symp_gram_closed}
+\lean{Weingarten.sympGramClosed}
+\leanok
+\uses{def:eps_vector, def:loops}
+$\widehat G^{\mathrm{Sp}}_{pq} := \varepsilon(p)\,\varepsilon(q)\,
+(-1)^n\,(-2M)^{\ell(p,q)}$, over any commutative ring.
+\end{definition}
+
+\begin{lemma}[Loop trace]\label{lem:trace_j_pow}
+\lean{Weingarten.trace_Jform_pow}
+\leanok
+\uses{def:j_form}
+$\operatorname{tr}\bigl(J^{2m}\bigr) = (-1)^m\,2M$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+$J^2=-1$, so $J^{2m}=(-1)^m\,\mathrm{id}$ on a $2M$-dimensional space.
+\end{proof}
+
+\begin{theorem}[Crossing-sign factorization]\label{thm:crossing_sign}
+\lean{Weingarten.sympGramContr_eq_closed}
+\uses{def:symp_gram_contr, def:symp_gram_closed, lem:sign_canonical_word, lem:trace_j_pow}
+\leanok
+$G^{\mathrm{Sp}} = \widehat G^{\mathrm{Sp}}$.
+\end{theorem}
+
+\begin{proof}
+\leanok
+Write $\ell := \ell(p,q)$. The argument has two halves: a gauge that
+removes the canonical orientation choice, and a loop-by-loop evaluation of
+the resulting index sum.
+
+\medskip\noindent\emph{A gauge-invariant contraction.}
+Call $w\in S_{2n}$ a \emph{word for $p$} if each consecutive value-pair
+$\{w(2k),w(2k+1)\}$ is a chord of $p$, so the $n$ pairs list the $n$ chords
+once each, in some order and orientation. For such a $w$ set
+$\Phi^w_p(i) := \sgn(w)\,\prod_{k=0}^{n-1} J_{\,i(w(2k)),\,i(w(2k+1))}$.
+Relative to the canonical word $\sigma_p$ (Def.~\ref{def:canonical_word}),
+an arbitrary word is $w=\sigma_p\circ g$ where $g$ permutes the $n$
+size-two blocks and flips the orientation of a subset $S$ of chords. A
+block permutation, viewed in $S_{2n}$ via the point-doubling embedding
+$S_n\hookrightarrow S_{2n}$, is even (each block transposition is a product
+of two position-transpositions), while each orientation flip is one
+position-transposition; hence $\sgn(g)=(-1)^{|S|}$, so
+$\sgn(w)=\varepsilon(p)\,(-1)^{|S|}$ using
+Lemma~\ref{lem:sign_canonical_word}. On the product side, reordering whole
+chords only reorders scalar factors, and reversing a chord $c\in S$
+replaces $J_{i(a),i(b)}$ by $J_{i(b),i(a)}=-J_{i(a),i(b)}$ by antisymmetry
+of $J$; thus the product picks up $(-1)^{|S|}$. The two sign powers cancel,
+giving $\Phi^w_p(i)=\varepsilon(p)\,\Delta'_p(i)$ for every word $w$. In
+particular $\Phi_p:=\Phi^w_p$ is independent of $w$, and
+$\Delta'_p=\varepsilon(p)\,\Phi_p$ since $\varepsilon(p)=\pm1$.
+Consequently
+\[
+  G^{\mathrm{Sp}}_{pq}=\sum_i\Delta'_p(i)\Delta'_q(i)
+  =\varepsilon(p)\varepsilon(q)\sum_i\Phi_p(i)\Phi_q(i),
+\]
+and it suffices to show $\sum_i\Phi_p(i)\Phi_q(i)=(-1)^n(-2M)^{\ell}$.
+
+\medskip\noindent\emph{Loop-adapted words.}
+The chords of $p$ and $q$ together form $\ell$ disjoint joint loops
+(Def.~\ref{def:loops}); a loop $L_t$ on $2m_t$ points alternates $p$- and
+$q$-edges, $\sum_t m_t=n$. Traverse $L_t$ as
+$x^t_0\xrightarrow{p}x^t_1\xrightarrow{q}x^t_2\xrightarrow{p}\cdots$,
+closing on a $q$-edge. Choose the word $w_p$ listing, loop after loop, the
+$p$-chords forward, value sequence $(x^t_0,x^t_1,\dots,x^t_{2m_t-1})$ on
+the block of $L_t$; and $w_q$ on the \emph{same} block allocation listing
+the $q$-chords forward, $(x^t_1,x^t_2,\dots,x^t_{2m_t-1},x^t_0)$. Both are
+genuine words since the loops partition $\mathrm{Fin}\,(2n)$.
+
+\medskip\noindent\emph{The index sum is one trace per loop.}
+In this gauge every edge is oriented forward along its loop, so
+$\Phi_p(i)\Phi_q(i)=\sgn(w_p)\sgn(w_q)\prod_{t=1}^{\ell}
+J_{i(x^t_0),i(x^t_1)}J_{i(x^t_1),i(x^t_2)}\cdots J_{i(x^t_{2m_t-1}),i(x^t_0)}$,
+the $2m_t$ forward edges of $L_t$. The index variables are disjoint across
+loops, so the sum over $i$ factors, and for one loop the cyclic chain is a
+trace:
+\[
+  \sum_{i|_{L_t}}J_{i(x^t_0),i(x^t_1)}\cdots J_{i(x^t_{2m_t-1}),i(x^t_0)}
+  =\operatorname{tr}\!\bigl(J^{2m_t}\bigr)=(-1)^{m_t}\,2M,
+\]
+by iterating $\sum_{y}J_{\cdot y}J_{y\cdot}=(J^2)_{\cdot\cdot}$ and then
+Lemma~\ref{lem:trace_j_pow}. Multiplying over the $\ell$ loops,
+$\sum_i\prod_{\text{fwd}}J=(-1)^{\sum_t m_t}(2M)^{\ell}=(-1)^n(2M)^{\ell}$.
+
+\medskip\noindent\emph{The alignment sign is one even cycle per loop.}
+Put $\tau:=w_q\circ w_p^{-1}$, so $\sgn(\tau)=\sgn(w_p)\sgn(w_q)$. Reading
+off the value sequences, $\tau(x^t_s)=w_q(s)=x^t_{s+1\bmod 2m_t}$, so on
+the $2m_t$ points of $L_t$ the permutation $\tau$ is the single cycle
+$(x^t_0\,x^t_1\,\cdots\,x^t_{2m_t-1})$ of even length, sign $-1$. As the
+loops partition the points, $\tau$ is a disjoint product of $\ell$ such
+cycles, so $\sgn(w_p)\sgn(w_q)=\sgn(\tau)=(-1)^{\ell}$ --- this is the
+sketch's ``one shift per loop'': the cyclic shift aligning $w_q$ to $w_p$
+is the $2m_t$-cycle, and an even cycle is odd.
+
+\medskip\noindent\emph{Assembly.} Combining the two displays,
+$\sum_i\Phi_p(i)\Phi_q(i)=(-1)^{\ell}(-1)^n(2M)^{\ell}=(-1)^n(-2M)^{\ell}$,
+whence
+$G^{\mathrm{Sp}}_{pq}=\varepsilon(p)\varepsilon(q)(-1)^n(-2M)^{\ell}
+=\widehat G^{\mathrm{Sp}}_{pq}$ for all $p,q$. (Verified at five cells
+through the $105\times105$ case, A2, PS1--PS6; walk-form corollary
+$D\equiv\mathrm{cr}(p)+\mathrm{cr}(q)+\ell\pmod2$ exhaustive at $n\le4$;
+the argument is given in full below.)
+
+\medskip\noindent\emph{Reduced form.} In Lean,
+\texttt{sympGramContr\_eq\_closed} is the thin top of this tower: after
+\texttt{ext p q} it rewrites $\Delta'_p\Delta'_q
+=\varepsilon(p)\varepsilon(q)\,\Phi_p\Phi_q$ via
+\texttt{deltaContr\_eq\_eps\_PhiCanon} (which is exactly the gauge lemma,
+$\sgn(\sigma_p)^2=1$ collapsing the two sign powers), pulls the constants
+out of the sum with \texttt{Finset.mul\_sum}, and closes by \texttt{ring}.
+The loop content is \texttt{PhiCanon\_sum}, which reduces to
+\texttt{deltaContr\_gram\_closed}. Rather than factor the index sum over
+loops directly (the orbit-factorization above has no off-the-shelf Mathlib
+form), Lean proves the latter by a \emph{merge-induction} on $n$:
+\texttt{deltaContr\_gram\_after\_collapse} sums out vertex $0$ and passes to
+\texttt{gram\_recursion}, which splits on whether $p$ and $q$ share the
+chord at $0$ --- the two-loop case (\texttt{two\_loop\_residual}, loop count
+$+1$) and the merge case (\texttt{merge\_residual}, loop count invariant),
+the merge sign being the crossing-parity leaf \texttt{qStar\_sign}. The
+per-loop value $\operatorname{tr}(J^{2m})=(-1)^m\,2M$ is
+\texttt{trace\_Jform\_pow}.
+\end{proof}
+
+\begin{corollary}[Conjugation form]\label{cor:symp_conjugation}
+\lean{Weingarten.sympGramClosed_eq_conj}
+\leanok
+\uses{def:symp_gram_closed, def:orth_gram}
+Entrywise, $\widehat G^{\mathrm{Sp}}_{pq} = \varepsilon(p)\,\bigl((-1)^n\,
+G^{\mathrm O}_n(-2M)_{pq}\bigr)\,\varepsilon(q)$: the symplectic Gram is an
+explicit signed conjugation of the orthogonal Gram at parameter $-2M$.
+\end{corollary}
+
+\begin{definition}[$\varepsilon$-twisted determinant vector]\label{def:eps_det_vector}
+\lean{Weingarten.epsDetVec}
+\leanok
+\uses{def:eps_vector, def:det_vector}
+$(\varepsilon\odot v)_p := \varepsilon(p)\,v_p$.
+\end{definition}
+
+\begin{definition}[Even-falling factorial]\label{def:even_falling}
+\lean{Weingarten.evenFalling}
+\leanok
+$e_n(M) := (2M)(2M-2)\cdots(2M-2n+2)$.
+\end{definition}
+
+\begin{definition}[Shifted rising factorial]\label{def:rising_shift}
+\lean{Weingarten.risingShift}
+\leanok
+$s_n(M) := (2M)(2M+1)\cdots(2M+n-1)$.
+\end{definition}
+
+\begin{theorem}[$\varepsilon$-twisted ones absorption]\label{thm:symp_eps_ones_absorb}
+\lean{Weingarten.sympGram_mulVec_epsVec}
+\leanok
+\uses{cor:symp_conjugation, thm:orth_ones_absorb, def:even_falling}
+$\widehat G^{\mathrm{Sp}}\,\varepsilon = e_n(M)\,\varepsilon$.
+\end{theorem}
+
+\begin{proof}
+\leanok
+\uses{cor:symp_conjugation, thm:orth_ones_absorb, def:even_falling}
+The conjugation corollary (Corollary~\ref{cor:symp_conjugation}) gives the
+matrix factorization
+\[
+  \widehat G^{\mathrm{Sp}} = (-1)^n\,D_\varepsilon\,G^{\mathrm O}_n(-2M)\,D_\varepsilon ,
+\]
+where $D_\varepsilon=\mathrm{diag}(\varepsilon(p))_p$ is an involution
+($\varepsilon(p)^2=1$). Hence
+$\widehat G^{\mathrm{Sp}}\,\varepsilon
+  =(-1)^n\,D_\varepsilon\,G^{\mathrm O}_n(-2M)\,D_\varepsilon\,\varepsilon$.
+The vector $D_\varepsilon\varepsilon$ has $p$-entry
+$\varepsilon(p)\,\varepsilon(p)=\varepsilon(p)^2=1$, so $D_\varepsilon\varepsilon=\mathbf 1$.
+Theorem~\ref{thm:orth_ones_absorb} is an identity of polynomials in the
+parameter, valid over any commutative ring and in particular at $-2M$, so
+$G^{\mathrm O}_n(-2M)\,\mathbf 1 = r_n(-2M)\,\mathbf 1$. Multiplying back by
+$D_\varepsilon$ scales out, $(D_\varepsilon\mathbf 1)_p=\varepsilon(p)$, giving
+$D_\varepsilon\bigl(r_n(-2M)\mathbf 1\bigr)=r_n(-2M)\,\varepsilon$. Collecting,
+\[
+  \widehat G^{\mathrm{Sp}}\,\varepsilon=(-1)^n\,r_n(-2M)\,\varepsilon .
+\]
+The twist arithmetic finishes: writing the rising factorial at $-2M$ in
+linear factors,
+\[
+  r_n(-2M)=\prod_{k=0}^{n-1}(-2M+2k)=\prod_{k=0}^{n-1}(-2)(M-k)=(-2)^n\prod_{k=0}^{n-1}(M-k),
+\]
+so $(-1)^n r_n(-2M)=2^n\prod_{k=0}^{n-1}(M-k)=\prod_{k=0}^{n-1}(2M-2k)=e_n(M)$.
+Thus $\widehat G^{\mathrm{Sp}}\,\varepsilon=e_n(M)\,\varepsilon$.
+
+\medskip
+\noindent\emph{Reduced form.} \texttt{sympGram\_mulVec\_epsVec} rewrites with
+\texttt{sympGramClosed\_factor} (the factorization above), peels the two
+$D_\varepsilon$ layers by \texttt{diag\_mulVec\_epsVec} ($D_\varepsilon\varepsilon=\mathbf 1$)
+and \texttt{diag\_mulVec\_one}, applies \texttt{orthGram\_mulVec\_one} at parameter
+$-2M$, and closes by \texttt{funext}, \texttt{simp}, and a \texttt{rw} with the scalar identity
+$(-1)^n\,r_n(-2M)=e_n(M)$, supplied by \texttt{evenRising\_neg} together with
+the $(-1)^{2n}=1$ collapse.
+\end{proof}
+
+\begin{theorem}[$\varepsilon$-twisted determinant absorption]\label{thm:symp_eps_det_absorb}
+\lean{Weingarten.sympGram_mulVec_epsDetVec}
+\leanok
+\uses{cor:symp_conjugation, thm:orth_det_absorb, def:eps_det_vector, def:rising_shift}
+$\widehat G^{\mathrm{Sp}}\,(\varepsilon\odot v) = s_n(M)\,
+(\varepsilon\odot v)$.
+\end{theorem}
+
+\begin{proof}
+\leanok
+\uses{cor:symp_conjugation, thm:orth_det_absorb, def:eps_det_vector, def:rising_shift}
+The argument is identical to Theorem~\ref{thm:symp_eps_ones_absorb} with the
+determinant vector in place of the all-ones vector. By
+Corollary~\ref{cor:symp_conjugation},
+\[
+  \widehat G^{\mathrm{Sp}}\,(\varepsilon\odot v)
+   =(-1)^n\,D_\varepsilon\,G^{\mathrm O}_n(-2M)\,D_\varepsilon\,(\varepsilon\odot v).
+\]
+The vector $D_\varepsilon(\varepsilon\odot v)$ has $p$-entry
+$\varepsilon(p)\cdot\varepsilon(p)v_p=v_p$, so $D_\varepsilon(\varepsilon\odot v)=v$.
+Theorem~\ref{thm:orth_det_absorb}, polynomial in the parameter and so valid
+at $-2M$, gives $G^{\mathrm O}_n(-2M)\,v=f_n(-2M)\,v$. Pushing $D_\varepsilon$
+back, $(D_\varepsilon v)_p=\varepsilon(p)v_p=(\varepsilon\odot v)_p$, so
+$D_\varepsilon\bigl(f_n(-2M)v\bigr)=f_n(-2M)\,(\varepsilon\odot v)$. Hence
+\[
+  \widehat G^{\mathrm{Sp}}\,(\varepsilon\odot v)=(-1)^n\,f_n(-2M)\,(\varepsilon\odot v).
+\]
+The twist arithmetic finishes: with the falling factorial at $-2M$ in linear
+factors,
+\[
+  f_n(-2M)=\prod_{k=0}^{n-1}(-2M-k)=(-1)^n\prod_{k=0}^{n-1}(2M+k),
+\]
+so $(-1)^n f_n(-2M)=\prod_{k=0}^{n-1}(2M+k)=s_n(M)$, giving
+$\widehat G^{\mathrm{Sp}}\,(\varepsilon\odot v)=s_n(M)\,(\varepsilon\odot v)$.
+The two eigenvalues swap qualitative roles relative to the orthogonal series:
+the substitution $N\mapsto-2M$ sends the rising factorial $r_n$ to the
+threshold-carrying $e_n$ and the falling factorial $f_n$ to the
+never-vanishing $s_n$, so the twisted \emph{ones} eigenvalue $e_n(M)$ now
+carries the threshold while $s_n(M)>0$ for every integer $M\ge 1$.
+
+\medskip
+\noindent\emph{Reduced form.} \texttt{sympGram\_mulVec\_epsDetVec} mirrors the
+ones case: rewrite by \texttt{sympGramClosed\_factor}, collapse the
+$D_\varepsilon$ layers via \texttt{diag\_mulVec\_epsDetVec}
+($D_\varepsilon(\varepsilon\odot v)=v$) and \texttt{diag\_mulVec\_detVec}, apply
+\texttt{orthGram\_mulVec\_detVec} at $-2M$, and finish by \texttt{funext},
+\texttt{simp}, and a \texttt{rw} with $(-1)^n f_n(-2M)=s_n(M)$, supplied by \texttt{fallingFact\_neg} with the
+$(-1)^{2n}=1$ collapse.
+\end{proof}
+
+\begin{theorem}[Kernel witness below threshold]\label{thm:symp_ker_witness}
+\lean{Weingarten.sympGram_mulVec_epsVec_eq_zero}
+\leanok
+\uses{thm:symp_eps_ones_absorb}
+For integers $M<n$, $\widehat G^{\mathrm{Sp}}\,\varepsilon = 0$: the
+$\varepsilon$ vector is an explicit kernel vector.
+\end{theorem}
+
+\begin{theorem}[Gram singularity below threshold]\label{thm:symp_not_unit}
+\lean{Weingarten.not_isUnit_sympGram}
+\leanok
+\uses{thm:symp_ker_witness}
+For integers $M<n$ the symplectic Gram is not invertible (over any
+nontrivial ring); the invertibility threshold is $M\ge n$.
+\end{theorem}
+
+\begin{theorem}[Exact vanishing below threshold]\label{thm:symp_vanish_below}
+\lean{Weingarten.vecMul_epsVec_eq_zero}
+\leanok
+\uses{def:comm_penrose, thm:symp_eps_ones_absorb}
+For integers $M<n$,
+$\varepsilon^{\mathsf T}W = 0$ for every commuting Penrose partner $W$ of
+$\widehat G^{\mathrm{Sp}}$: all $\varepsilon$-row sums of the symplectic
+Weingarten data vanish exactly. (Machine check: A6/PS6 at five cells with
+Penrose-certified pseudo-inverses; rows exactly $0$ below threshold.)
+\end{theorem}
+
+\begin{theorem}[Conditional even-falling rule]\label{thm:symp_even_falling_rule}
+\lean{Weingarten.evenFalling_smul_vecMul_epsVec}
+\leanok
+\uses{def:comm_penrose, thm:symp_eps_ones_absorb}
+If $\widehat G^{\mathrm{Sp}}$ is invertible and $W$ is a commuting Penrose
+partner, $e_n(M)\,\varepsilon^{\mathsf T}W = \varepsilon^{\mathsf T}$.
+\end{theorem}
+
+\begin{theorem}[Conditional shifted-rising rule]\label{thm:symp_rising_shift_rule}
+\lean{Weingarten.risingShift_smul_vecMul_epsDetVec}
+\leanok
+\uses{def:comm_penrose, thm:symp_eps_det_absorb}
+Under the same hypotheses, $s_n(M)\,(\varepsilon\odot v)^{\mathsf T}W
+= (\varepsilon\odot v)^{\mathsf T}$ --- the never-vanishing side of the
+role swap.
+\end{theorem}
+
+\begin{remark}[Integral reading: expected Pfaffians of skew compressions]\label{rem:symp_integral}
+\uses{thm:symp_vanish_below}
+For $M\ge n$, take $J$-closed column and row sets $C$ ($|C|=2n$) and $R$
+($|R|=2r$), the corner $A = S[R,C]$ of Haar $S\in\mathrm{Sp}(M)$, and the
+skew compression $B = A^{\mathsf T}\tilde J A$. Then
+$E[\mathrm{Pf}(B)] = \varepsilon(n_0)\,
+\prod_{j<n}(2r-2j)\big/\prod_{j<n}(2M-2j)$, with $n_0$ the partner pairing
+of $C$ in slot positions (the unique column-side survivor of the Weingarten
+contraction). The dictionary is exact ---
+$\det^2$ is to the sign vector as Pfaffian-of-compression is to the
+$\varepsilon$ vector --- and the kernel statement plays two roles: the
+group-side denominator above threshold, and the numerator zero for $r<n$,
+matching the pointwise vanishing of the Pfaffian of a rank-deficient skew
+matrix. For $n>M$ no $J$-closed column set exists --- the corner does not
+exist --- so Theorem~\ref{thm:symp_vanish_below} is the pseudo-inverse
+consistency statement, exactly parallel to $E[(\det)^2]$. Verified at ten
+cells with brute-forced Grams and a direct $\mathrm{SU}(2)$ anchor
+(PF0--PF4); the first-moment formula was not located displayed (the
+Pfaffian point-process structure of symplectic truncations is well
+studied). $\mathrm{Sp}(M)$ Haar measure is out of Lean scope (the in-repo Haar
+bridge of Chapter~\ref{ch:haar} is $\mathrm U(N)$-only, at the formalized
+degrees); this remark stays prose only.
+\end{remark}
+
+\begin{remark}[Conjecture: integral reading of the $\varepsilon$-determinant functional]\label{rem:eps_det_conj}
+\uses{thm:symp_rising_shift_rule}
+The never-vanishing functional
+$(\varepsilon\odot v)^{\mathsf T}\mathrm{Wg}^{\mathrm{Sp}} = 1/s_n(M)$
+should admit a direct integral reading mirroring the orthogonal sphere
+moment (single-entry moments are the natural candidate). This is recorded
+as a \emph{conjecture}: underived, unverified, and not scheduled for
+formalization.
+\end{remark}
+
+\chapter{The \texorpdfstring{$\mathrm U(N)$}{U(N)} Haar-integration bridge}\label{ch:haar}
+
+This chapter states, as tracked blueprint nodes, the
+\texttt{Weingarten/Haar/} layer. \emph{Scope honesty
+(the claim ceiling, verbatim from the code):} these modules provide the
+$\mathrm U(N)$ Haar-integration bridge \emph{at the formalized degrees
+only} --- the exact $n=1$ entry integral, the $n=2$ fourth-moment
+system, and trace-word moments through total degree~$5$. The
+general-$n$ integral~$\leftrightarrow$~Gram moment identity (the
+Collins--\'Sniady master formula) is \emph{not} formalized in this
+repository, and no declaration claims or names it. Everything stated
+below is fully proved in Lean, \emph{sorry}-free and axiom-clean.
+Throughout, $G=\mathrm U(N)$ is the unitary group of
+$N\times N$ complex matrices and $E$ denotes an expectation on the
+continuous observables $C(G,\mathbb C)$.
+
+\section{The abstract Haar state}
+
+\begin{definition}[Haar expectation interface]\label{def:haar_state}
+\lean{Weingarten.Haar.HaarExpectation}
+\leanok
+A \emph{Haar expectation} on $\mathrm U(N)$ is a $\mathbb C$-linear
+functional $E\colon C(\mathrm U(N),\mathbb C)\to\mathbb C$ with
+$E[1]=1$ that is invariant under both translation actions on the
+argument: $E[f(g\,\cdot)]=E[f]=E[f(\cdot\,g)]$ for every unitary $g$
+(Banica--Collins, Def.~4.1). The domain restriction to
+\emph{continuous} observables is load-bearing: the same interface on
+all functions $\mathrm U(N)\to\mathbb C$ is provably uninhabited (a
+coboundary/orbit argument, recorded with the definition).
+\end{definition}
+
+\begin{lemma}[Charge kill]\label{lem:charge_kill}
+\lean{Weingarten.Haar.HaarExpectation.integral_eq_zero_of_charge}
+\leanok
+\uses{def:haar_state}
+If translation of the argument by some unitary $g$ rescales an
+observable, $f(g\,\cdot)=w\,f$ with $w\neq1$, then $E[f]=0$; likewise
+on the right. In particular scalar phases $zI$ ($|z|=1$) kill every
+observable of nonzero total charge (Collins--\'Sniady, eq.~(12)).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{def:haar_state}
+Invariance gives $E[f]=E[f(g\,\cdot)]=w\,E[f]$, so
+$(w-1)E[f]=0$.
+\end{proof}
+
+\section{The entry integrals at \texorpdfstring{$n=1$}{n=1}}
+
+The observables are matrix-entry evaluations
+$U\mapsto U_{ij}$, the trace $U\mapsto\operatorname{Tr}U$, and the
+pairings $U\mapsto\operatorname{Tr}(AU)$,
+$U\mapsto\operatorname{Tr}(BU^{*})$; the structured unitaries doing
+the work are diagonal sign and phase matrices, permutation matrices,
+and one $\pi/4$ plane rotation. Everything in this section and the
+next is proved \emph{conditionally on the interface alone} --- no
+measure theory enters until Section~\ref{sec:haar_construction}.
+
+\begin{theorem}[The $n=1$ entry table]\label{thm:entry_integral}
+\lean{Weingarten.Haar.HaarExpectation.integral_entry_mul_star_entry}
+\leanok
+\uses{def:haar_state, lem:charge_kill}
+For every Haar expectation $E$ and all indices,
+\[
+E\bigl[U_{ij}\,\overline{U_{kl}}\bigr]
+=\frac{\delta_{ik}\,\delta_{jl}}{N}.
+\]
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:charge_kill}
+Row and column sign unitaries rescale the off-diagonal cases by $-1$,
+so Lemma~\ref{lem:charge_kill} kills them. For the diagonal case,
+permutation bi-invariance equalizes $E\,|U_{ij}|^{2}$ over all
+$(i,j)$, and the row-unitarity identity
+$\sum_{b}|U_{ib}|^{2}=1$, read as an identity of observables and
+averaged, pins the common value to $1/N$.
+\end{proof}
+
+\begin{theorem}[Trace moments at $n=1$]\label{thm:trace_moments_one}
+\lean{Weingarten.Haar.HaarExpectation.integral_trace_mul_star_trace}
+\leanok
+\uses{def:haar_state, thm:entry_integral, lem:charge_kill}
+$E[\operatorname{Tr}U]=0$ (a scalar-phase charge kill), and for
+$N\geq1$,
+\[
+E\bigl[|\operatorname{Tr}U|^{2}\bigr]=1 .
+\]
+More generally, without any hypothesis on $N$,
+$E\bigl[\operatorname{Tr}(AU)\,\operatorname{Tr}(BU^{*})\bigr]
+=\operatorname{Tr}(AB)/N$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:entry_integral}
+Expand the traces into entries and apply
+Theorem~\ref{thm:entry_integral}: the double sum collapses to
+$\sum_{i}1/N$, respectively to $\operatorname{Tr}(AB)/N$.
+\end{proof}
+
+\section{The \texorpdfstring{$n=2$}{n=2} fourth-moment system}
+
+\begin{theorem}[The fourth-moment table]\label{thm:fourth_moments}
+\lean{Weingarten.Haar.HaarExpectation.integral_absSq_mul_absSq_row}
+\leanok
+\uses{def:haar_state, lem:charge_kill, thm:entry_integral}
+For every Haar expectation, all $i\neq j$, and with the four index
+patterns stated separately in Lean:
+\[
+E\bigl[|U_{ii}|^{2}|U_{ij}|^{2}\bigr]=\frac1{N(N+1)},\quad
+E\bigl[|U_{ij}|^{4}\bigr]=\frac{2}{N(N+1)},\quad
+E\bigl[|U_{ii}|^{2}|U_{jj}|^{2}\bigr]=\frac1{N^{2}-1},
+\]
+\[
+E\bigl[U_{ii}U_{jj}\,\overline{U_{ij}U_{ji}}\bigr]
+=-\frac1{N(N^{2}-1)} .
+\]
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{lem:charge_kill, thm:entry_integral}
+Unitarity and orthogonality contractions plus permutation
+equalization yield an \emph{underdetermined} linear system in the
+patterns; the closing equation $A=2B$ comes from right-invariance
+under the $\pi/4$ plane rotation, whose cross terms are killed by a
+diagonal phase. The system is then solved exactly
+(\texttt{linear\_combination}) --- character-free, and with no general
+moment formula anywhere.
+\end{proof}
+
+\begin{theorem}[Fourth absolute trace moment]\label{thm:abs_trace_four}
+\lean{Weingarten.Haar.HaarExpectation.integral_absTrace_pow_four}
+\leanok
+\uses{thm:fourth_moments, lem:charge_kill}
+For $N\geq2$: $E\bigl[|\operatorname{Tr}U|^{4}\bigr]=2$, exactly at
+finite $N$. (At $N=1$ the value is $1$.)
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:fourth_moments, lem:charge_kill}
+A universal phase-covariance lemma classifies the diagonal fourth
+moments $E[U_{aa}U_{bb}\overline{U_{cc}U_{dd}}]$: mismatched index
+pair-multisets die, and the surviving counts assemble to
+$2/(N+1)+2N/(N+1)=2$ via Theorem~\ref{thm:fourth_moments}.
+\end{proof}
+
+\section{The Mathlib construction: unconditional for every
+\texorpdfstring{$N$}{N}}\label{sec:haar_construction}
+
+\begin{theorem}[Compactness]\label{thm:compact_unitary}
+\lean{Weingarten.Haar.isCompact_unitaryGroup}
+\leanok
+$\mathrm U(N)$ is compact: it is closed inside the compact set of
+matrices all of whose entries lie in the closed unit disc.
+\end{theorem}
+
+\begin{definition}[The Haar probability measure]\label{def:haar_measure}
+\lean{Weingarten.Haar.haarUnitary}
+\leanok
+\uses{thm:compact_unitary}
+\texttt{haarUnitary}~$N$ is Mathlib's Haar measure on $\mathrm U(N)$
+(under an explicitly declared Borel $\sigma$-algebra), a probability
+measure, right-invariant as well as left-invariant (unimodularity via
+uniqueness of Haar probability measures).
+\end{definition}
+
+\begin{theorem}[Inhabitation]\label{thm:haar_expectation}
+\lean{Weingarten.Haar.haarExpectation}
+\leanok
+\uses{def:haar_state, def:haar_measure}
+Integration against \texttt{haarUnitary}~$N$ inhabits the interface of
+Definition~\ref{def:haar_state} for \emph{every} $N$. Consequently
+every conditional theorem above holds unconditionally of the
+constructed expectation.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{def:haar_measure}
+Linearity and normalization are integral calculus; the two
+invariances are Mathlib's
+\texttt{integral\_mul\_left\_eq\_self}/\texttt{right}.
+\end{proof}
+
+\begin{theorem}[Star-reality and conjugation invariance]\label{thm:star_conj}
+\lean{Weingarten.Haar.haarExpectation_isStarReal}
+\leanok
+\uses{thm:haar_expectation, def:haar_state}
+The constructed expectation satisfies
+$E[\overline{f}]=\overline{E[f]}$ --- a genuine property of the
+witness, not derivable from the bare interface. Separately, for
+\emph{any} Haar expectation, invariance under conjugation
+$f\mapsto f(gUg^{-1})$ is free, being the composite of the two
+translation invariances; matrix entries transform under diagonal-phase
+conjugation with computable covariance, and the trace is a class
+function.
+\end{theorem}
+
+\begin{remark}[Second-countability shim]\label{rem:shim}
+\leanok
+Two instances (second countability of the matrix space and of its
+unitary subtype) close a gap at the Mathlib pin; they unlock the Borel
+structure on $\mathrm U(N)\times\mathrm U(N)$ and on finite powers by
+instance search, which the pair and product tiers below rely on. Kept
+as a separate module for pin-advance visibility.
+\end{remark}
+
+\section{Trace words and the one-matrix model}
+
+\begin{theorem}[Trace words through degree five]\label{thm:trace_words}
+\lean{Weingarten.Haar.HaarExpectation.integral_trace_pow_mul_star_pow}
+\leanok
+\uses{def:haar_state, lem:charge_kill, thm:trace_moments_one, thm:abs_trace_four}
+Write $T=\operatorname{Tr}U$. For $N\geq2$ and $a+b\leq5$,
+\[
+E\bigl[T^{a}\overline{T}^{\,b}\bigr]
+=\begin{cases}
+1 & a=b\in\{0,1\},\\
+2 & a=b=2,\\
+0 & a\neq b .
+\end{cases}
+\]
+The unbalanced cases die by the charge kill at the primitive eighth
+root of unity $\zeta=(1+i)/\sqrt2$ (the naive $z=i$ fails at charge
+four); the balanced values are
+Theorems~\ref{thm:trace_moments_one} and~\ref{thm:abs_trace_four}.
+\end{theorem}
+
+\begin{theorem}[One-matrix-model coefficients]\label{thm:one_matrix_model}
+\lean{Weingarten.Haar.one_matrix_model_coeffs}
+\leanok
+\uses{thm:trace_words}
+Let $\langle\operatorname{Tr}U\rangle_{\beta}$ be the tilted
+expectation with weight $e^{\beta\operatorname{Re}\operatorname{Tr}U}$,
+expanded as a truncated exponential-generating-function quotient with
+coefficients $w_{0},\dots,w_{4}$. For $N\geq2$:
+\[
+w_{1}=\tfrac12,\qquad w_{2}=w_{3}=w_{4}=0,
+\]
+i.e.\ $\langle\operatorname{Tr}U\rangle_{\beta}=\beta/2+O(\beta^{5})$
+--- exact finite-$N$ mock-Gaussianity (at $N=1$, $w_{3}=-1/16$).
+The companion expansion gives
+$\langle|\operatorname{Tr}U|^{2}\rangle_{\beta}
+=1+\beta^{2}/4+O(\beta^{4})$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:trace_words}
+Binomial expansion of the real-part powers into trace words, then the
+degree-$\leq5$ table; the moment lists
+$m_{k}=E[T\cdot R^{k}]$ and $z_{k}=E[R^{k}]$
+($R=\operatorname{Re}\operatorname{Tr}U$) through $k\leq4$ are
+$m=(0,\tfrac12,0,\tfrac34,0)$ and $z=(1,0,\tfrac12,0,\tfrac34)$.
+Finite, analysis-free moment algebra throughout.
+\end{proof}
+
+\section{The one-link kernel scalars}
+
+\begin{definition}[Kernel scalars]\label{def:kernel_scalars}
+\lean{Weingarten.Haar.honestZ}
+\leanok
+\uses{def:haar_measure}
+For $\beta\in\mathbb R$ set
+$Z(\beta)=\int e^{\beta\operatorname{Re}\operatorname{Tr}U}\,dU$ and
+$\lambda_{F}(\beta)=N^{-1}\!\int\operatorname{Re}\operatorname{Tr}U
+\cdot e^{\beta\operatorname{Re}\operatorname{Tr}U}\,dU$. Then
+$Z(\beta)>0$ and $Z(\beta)\geq1$ for all $N,\beta$, with the central
+symmetrizations $Z$ as a $\cosh$-average and $\lambda_{F}$ as a
+$\sinh$-average; $\lambda_{F}(\beta)>0$ for $N\geq1$, $\beta>0$ (open
+positivity of Haar measure).
+\end{definition}
+
+\begin{theorem}[Strict kernel inequality]\label{thm:lamF_lt_Z}
+\lean{Weingarten.Haar.honestLamF_lt_honestZ}
+\leanok
+\uses{def:kernel_scalars}
+For $N\geq1$ and \emph{every} real $\beta$:
+$\lambda_{F}(\beta)<Z(\beta)$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{def:kernel_scalars}
+The pointwise bound
+$\cosh x-t\sinh x\geq e^{-|x|}\geq e^{-|\beta|N}$ for $|t|\leq1$,
+integrated --- no series expansion and no differentiation under the
+integral. (Scope honesty, verbatim from the module: ``the
+eigen-equation and gap layers of the development in which this layer
+originated are NOT ported. No completeness of characters is
+claimed.'')
+\end{proof}
+
+\section{Pair and product Haar}
+
+\begin{definition}[Pair expectation and its witness]\label{def:pair_haar}
+\lean{Weingarten.Haar.pairHaar}
+\leanok
+\uses{def:haar_state, def:haar_measure, thm:haar_expectation, rem:shim}
+A \emph{pair Haar expectation} over a designated $E$ is a normalized
+linear functional on $C(\mathrm U(N)^{2},\mathbb C)$ with per-slot
+translation invariance, swap covariance, and both marginals equal to
+$E$ (the marginal is an explicit parameter --- a recorded design
+decision). The product measure
+$\texttt{haarUnitary}\otimes\texttt{haarUnitary}$ furnishes the honest
+witness for every $N$; on the witness, product observables factorize,
+$E_{2}[(f\circ\pi_{1})(g\circ\pi_{2})]=E[f]\,E[g]$, and the
+multiplication pushforward $f\mapsto E_{2}[f(UV)]$ is again a Haar
+expectation, discharged from the structure fields alone (no Fubini).
+(The declarations: \texttt{PairHaarExpectation},
+\texttt{pairHaarExpectation}, \texttt{pairE\_prod\_factorizes},
+\texttt{pairE\_polynomial\_factorizes},
+\texttt{PairHaarExpectation.compMul},
+\texttt{pairHaarExpectation\_compMul\_eq}.)
+\end{definition}
+
+\begin{definition}[Product Haar and tilted measures]\label{def:product_haar}
+\lean{Weingarten.Haar.productHaar}
+\leanok
+\uses{def:haar_measure, thm:haar_expectation, rem:shim, def:pair_haar, def:kernel_scalars}
+$\texttt{productHaar}\,N\,k$ is the $k$-fold product of
+\texttt{haarUnitary} (probability, open-positive, two-sided invariant,
+Haar), with evaluation marginals
+$\int f(A_{i})=E[f]$, the $k=0$ Dirac and $k=1$ identifications, and
+the \emph{triangular substitution} law: if a continuous $g$ is blind
+to slot $i$, then $A\mapsto F(A[i\mapsto g(A)\cdot A_{i}])$ integrates
+to $\int F$. The honest tilted measures (a pair Gibbs weight
+$e^{\beta\operatorname{Re}\operatorname{Tr}(U^{-1}V)}$ and its chain
+version on $L+1$ slots) are defined here with their probability
+instances; $\beta$ is in Chatterjee units. Verbatim from the module's
+scope note: ``no invariant-span scope claims and no gap claims are
+made in this file''; and from the chain measure's own docstring: ``no
+lattice-gauge-theory claim is made in this repository.''
+\end{definition}
+
+\section{The Weingarten dictionary at
+\texorpdfstring{$n=1,2$}{n=1,2}}\label{sec:wg_values}
+
+The two nodes below are pure $S_{n}$ algebra --- they import only the
+sum rules of Chapter~\ref{ch:wg}, no Haar module --- yet they close
+the loop: the values of this repository's $\Wg$ match the Haar moments
+computed independently above, exactly as the Weingarten calculus
+predicts at the formalized degrees.
+
+\begin{theorem}[$\Wg$ at $n=1$]\label{thm:wg_one}
+\lean{Weingarten.Haar.wg_one_apply}
+\leanok
+\uses{def:wg, thm:rising}
+For real $N>0$: $\Wg(\sigma,N)=N^{-1}$ for the unique
+$\sigma\in S_{1}$ --- matching the entry integral of
+Theorem~\ref{thm:entry_integral}.
+\end{theorem}
+
+\begin{theorem}[$\Wg$ at $n=2$]\label{thm:wg_two}
+\lean{Weingarten.Haar.wg_two_one}
+\leanok
+\uses{def:wg, thm:rising, thm:falling}
+For real $N>1$:
+\[
+\Wg(e,N)=\frac1{N^{2}-1},\qquad
+\Wg\bigl((1\,2),N\bigr)=-\frac1{N(N^{2}-1)}
+\]
+--- matching the fourth-moment table of
+Theorem~\ref{thm:fourth_moments}.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{thm:rising, thm:falling}
+Solve the $2\times2$ linear system formed by the rising and falling
+sum rules over $S_{2}$ --- no characters and no matrix inversion
+(the identity value is \texttt{wg\_two\_one}; the transposition value
+is the sibling \texttt{wg\_two\_swap}). Committed cross-checks: the Collins--\'Sniady identity
+$2\Wg(e)+2\Wg((1\,2))=2/(N(N+1))$, sign consistency with the parity
+theorem, and a numeric spot check at $N=3$.
+\end{proof}
+
+\begin{remark}[Bridge summary]\label{rem:bridge_summary}
+\leanok
+\uses{def:gram, def:wg, def:orth_gram, def:symp_gram_closed, def:j_form}
+The bridge-summary module contains no new declarations: it records the
+vocabulary map from the bridge layer onto this repository's own
+objects (the unitary Gram \texttt{Weingarten.gram}, the Weingarten
+function \texttt{Weingarten.wg}, the orthogonal Gram
+\texttt{Weingarten.orthGram}, the symplectic Gram
+\texttt{Weingarten.sympGramClosed} on the form \texttt{Weingarten.Jform}),
+restates the claim ceiling, and keeps one live example consuming a
+Weingarten-calculus theorem, so the dependency is load-bearing rather
+than merely declared. The moment theorems of this chapter carry
+\emph{no code dependency} on $\Wg$; only
+Section~\ref{sec:wg_values} genuinely consumes the sum rules --- the
+correspondence between the two is documentation-level, by design.
+\end{remark}
+
+\chapter{Boundary: deliberately out of scope}\label{ch:boundary}
+
+Recorded to prevent scope creep. \emph{In scope}, and fully proved in Lean
+(\texttt{leanok}, \emph{sorry}-free, axiom-clean): the unitary spine (the Jucys
+factorization, the two sum rules, the parity sign theorem, and the closed-form
+cancellation ratio), the Penrose-conditional below-threshold package with the
+certified $(N,n)=(2,3)$ cell, the pair-partition combinatorics, the full
+orthogonal and symplectic Gram packages of
+Chapters~\ref{ch:pairings}--\ref{ch:symplectic}, and the $\mathrm U(N)$
+\emph{Haar-integration bridge at the formalized degrees}
+(Chapter~\ref{ch:haar}: the Haar expectation inhabited for every $N$, the
+$n=1$ and $n=2$ entry tables, trace words through degree five with the
+one-matrix-model coefficients, the one-link kernel scalars, and the
+Weingarten values at $n=1,2$) --- that last claim exactly as stated,
+never ``full Haar-integration formalization''.
+
+\emph{Out of scope}, by deliberate choice:
+\begin{itemize}
+  \item the general-$n$ Collins--\'Sniady moment formula --- the expansion of
+    $\int U_{i_1j_1}\cdots U_{i_nj_n}\,
+    \overline{U_{k_1l_1}}\cdots\overline{U_{k_nl_n}}\,dU$ as a double sum of
+    Kronecker-delta products weighted by $\Wg$ --- together with its two
+    supporting pillars at general $n$: the invariant-tensor spanning argument
+    (Schur--Weyl surjectivity) and the projection argument. None of these is
+    formalized, and the repository deliberately contains no declaration of
+    that name or shape;
+  \item the restricted character-sum definition of $\Wg$ for general $N<n$ and its
+    identification with the Penrose partners of Chapter~\ref{ch:below}: the
+    orthogonality-route proofs need partition-indexed $S_n$ character theory
+    (Murnaghan--Nakayama, hook lengths) believed absent from Mathlib and worth a
+    separate, coordinated contribution;
+  \item the \emph{general} existence of a Penrose partner for arbitrary integer
+    $1\le N<n$: a formalizable route exists --- the Gram element is symmetric in
+    the regular representation, so its minimal polynomial is squarefree and the
+    group inverse is a polynomial in $\mathcal G$ --- but it is real work off the
+    critical path, and the $(2,3)$ cell stands as the certified instance;
+  \item certified cells beyond $(2,3)$: the $S_4$ and $S_5$ anchors $3/62$ and
+    $15/958$ would need $24\times24$ and $120\times120$ exact certificates,
+    \texttt{native\_decide} territory with its trust caveat;
+  \item the $\mathrm O(N)$ and $\mathrm{Sp}(M)$ Haar bridges: the integral
+    readings of the twisted functionals
+    (Remarks~\ref{rem:orth_integral} and \ref{rem:symp_integral}, and the
+    conjecture in Remark~\ref{rem:eps_det_conj}) remain prose only --- the
+    ported bridge is unitary-only;
+  \item the Baik--Rains basis and the circular-ensemble
+    (COE/CSE) Weingarten variants: compact-symmetric-space material
+    outside this package;
+  \item Moore--Penrose existence theory for the orthogonal and symplectic Grams,
+    and Brauer-algebra-internal reformulations: the proofs here live entirely in
+    pairing language;
+  \item lattice and analytic applications (transfer operators, spectral gaps,
+    Wilson loops on a lattice): deliberately not part of this repository,
+    and no such result is claimed here.
+\end{itemize}
+
+
+\chapter{References}\label{ch:references}
+
+The mathematics is classical; the works below are where each statement is
+verified, and no node of this blueprint is claimed as new mathematics. arXiv
+identifiers are given as the canonical, checkable anchor.
+
+\begin{itemize}
+\item T.~Banica, \emph{The orthogonal Weingarten formula in compact form}, arXiv:0906.4694.
+\item T.~Banica and S.~Curran, \emph{Decomposition results for Gram matrix determinants}, J.\ Math.\ Phys.\ \textbf{51} (2010); arXiv:1009.4036.
+\item J.~Campbell and Z.~Yin, \emph{Finite free convolutions via Weingarten calculus}, arXiv:1907.01009.
+\item B.~Collins, \emph{Moments and cumulants of polynomial random variables on unitary groups, the Itzykson--Zuber integral, and free probability}, Int.\ Math.\ Res.\ Not.\ \textbf{2003}, no.~17, 953--982; arXiv:math-ph/0205010.
+\item B.~Collins and S.~Matsumoto, \emph{On some properties of orthogonal Weingarten functions}, J.\ Math.\ Phys.\ \textbf{50} (2009), 113516; arXiv:0903.5143.
+\item B.~Collins and S.~Matsumoto, \emph{Weingarten calculus via orthogonality relations: new applications}, ALEA Lat.\ Am.\ J.\ Probab.\ Math.\ Stat.\ \textbf{14} (2017), no.~1, 631--656; arXiv:1701.04493.
+\item B.~Collins and S.~Matsumoto, \emph{Weingarten calculus with virtual isometries}, arXiv:2510.21186 (2025).
+\item B.~Collins, S.~Matsumoto, and J.~Novak, \emph{The Weingarten calculus}, Notices Amer.\ Math.\ Soc.\ \textbf{69} (2022), no.~5, 734--745; arXiv:2109.14890.
+\item B.~Collins and P.~\'Sniady, \emph{Integration with respect to the Haar measure on unitary, orthogonal and symplectic group}, Comm.\ Math.\ Phys.\ \textbf{264} (2006), no.~3, 773--795.
+\item X.~Coulter and N.~Do, \emph{From Weingarten calculus for real Grassmannians to deformations of monotone Hurwitz numbers and Jucys--Murphy elements}, arXiv:2506.04002.
+\item A.-A.~A. Jucys, \emph{Symmetric polynomials and the center of the symmetric group ring}, Rep.\ Math.\ Phys.\ \textbf{5} (1974), 107--112.
+\item I.~G. Macdonald, \emph{Symmetric Functions and Hall Polynomials}, 2nd ed., Oxford Univ.\ Press, 1995.
+\item S.~Matsumoto, \emph{General moments of the inverse real Wishart distribution and orthogonal Weingarten functions}, J.\ Theoret.\ Probab.\ \textbf{25} (2012); arXiv:1004.4717.
+\item S.~Matsumoto, \emph{Jucys--Murphy elements, orthogonal matrix integrals, and Jack measures}, Ramanujan J.\ \textbf{26} (2011), no.~1, 69--107; arXiv:1001.2345.
+\item S.~Matsumoto, \emph{Weingarten calculus for matrix ensembles associated with compact symmetric spaces}, Random Matrices Theory Appl.\ \textbf{2} (2013), no.~2, 1350001; arXiv:1301.5401.
+\item S.~Matsumoto and J.~Novak, \emph{Jucys--Murphy elements and unitary matrix integrals}, Int.\ Math.\ Res.\ Not.\ IMRN \textbf{2013}, no.~2, 362--397; arXiv:0905.1992.
+\item J.~Novak, \emph{Jucys--Murphy elements and the unitary Weingarten function}, Banach Center Publ.\ \textbf{89} (2010), 231--235.
+\item C.~E.~I. Redelmeier, \emph{Explicit multi-matrix topological expansion for quaternionic random matrices}, arXiv:1412.0646.
+\item D.~Weingarten, \emph{Asymptotic behavior of group integrals in the limit of infinite rank}, J.\ Math.\ Phys.\ \textbf{19} (1978), 999--1001.
+\item P.~Zinn-Justin, \emph{Jucys--Murphy elements and Weingarten matrices}, Lett.\ Math.\ Phys.\ \textbf{91} (2010); arXiv:0907.2719.
+\item T.~Banica and B.~Collins, \emph{Integration over compact quantum groups}, arXiv:math/0511253. (Def.~4.1: the bi-invariant Haar state --- the expectation interface of Chapter~\ref{ch:haar}.)
+\item P.~Diaconis and M.~Shahshahani, \emph{On the eigenvalues of random matrices}, J.\ Appl.\ Probab.\ \textbf{31A} (1994), 49--62. (Priority for the trace moments; cited with the range condition that Diaconis--Evans corrects.)
+\item P.~Diaconis and S.~N.~Evans, \emph{Linear functionals of eigenvalues of random matrices}, Trans.\ Amer.\ Math.\ Soc.\ \textbf{353} (2001), 2615--2633. (Thm~2.1(a): the sharp range for the joint trace moments.)
+\item E.~M.~Rains, \emph{Increasing subsequences and the classical groups}, Electron.\ J.\ Combin.\ \textbf{5} (1998), \#R12. (Exact $E|\mathrm{Tr}\,U|^{2n}$ as LIS counts, at every $N$.)
+\item A.~Soshnikov, Ann.\ Probab.\ \textbf{28} (2000), and C.~P.~Hughes and Z.~Rudnick, \emph{Mock-Gaussian behaviour for linear statistics of classical compact groups}, J.\ Phys.\ A \textbf{36} (2003), 2919; arXiv:math/0206289. (The mock-Gaussianity frame for the one-matrix-model coefficients.)
+\item D.~J.~Gross and E.~Witten, Phys.\ Rev.\ D \textbf{21} (1980) 446, and S.~R.~Wadia, Phys.\ Lett.\ B \textbf{93} (1980) 403; with S.~R.~Wadia, arXiv:1212.2906. (The one-plaquette model; the strong-coupling expansion cross-checked at eqs.~(46)/(48)/(49) of the latter.)
+\item J.-M.~Drouffe and J.-B.~Zuber, \emph{Strong coupling and mean field methods in lattice gauge theories}, Phys.\ Rep.\ \textbf{102} (1983), 1--119. (The display source for the strong-coupling coefficients and character expansions.)
+\item M.~L\"uscher, Comm.\ Math.\ Phys.\ \textbf{54} (1977), 283 (Eq.~(21)), and M.~Creutz, Phys.\ Rev.\ D \textbf{15} (1977), 1128 (p.~1131). (The one-link kernel $e^{\beta\,\mathrm{Re}\,\mathrm{Tr}}$ and its transfer-matrix reading.)
+\item S.~Samuel, \emph{$\mathrm U(N)$ integrals, $1/N$, and the De~Wit--'t~Hooft anomalies}, J.\ Math.\ Phys.\ \textbf{21} (1980), 2695. (Elementary low-order $\mathrm U(N)$ integrals by invariance --- the genre of the $n=2$ closing argument.)
+\item S.~Chatterjee, \emph{Yang--Mills for probabilists}, arXiv:1803.01950. (Eq.~(3.2): the $\beta$ normalization named ``Chatterjee units'' in the Haar layer.)
+\end{itemize}
+
+

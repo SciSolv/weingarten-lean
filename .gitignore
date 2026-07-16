@@ -1,0 +1,24 @@
+*.olean
+*.docx
+.DS_Store
+/.lake/
+/build/
+/blueprint/print/
+/blueprint/web/
+/blueprint/src/*.aux
+/blueprint/src/*.log
+/blueprint/src/*.out
+/blueprint/src/*.toc
+/blueprint/src/*.synctex.gz
+/blueprint/src/*.fls
+/blueprint/src/*.fdb_latexmk
+/blueprint/src/print.pdf
+/blueprint/src/web.paux
+/notes/
+/scratch/
+/temp/
+/scratch_cw.lean.base
+
+# USER RULING 2026-07-11: internal docs are LOCAL-ONLY across all four sibling repos
+PrivateDocs/
+/PrivateBackups/
