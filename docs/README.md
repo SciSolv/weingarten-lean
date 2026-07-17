@@ -34,6 +34,7 @@ python scripts/gen_dep_graph.py
 The interactive web blueprint — with the live, clickable dependency graph — is the
 eventual **GitHub Pages** target; the `blueprint/src/` sources are kept ready for it. (The committed
 `.github/workflows/blueprint.yml` gates every push on the kernel build, the axiom
-audit (`scripts/AxiomsAudit.lean`), and the exact-arithmetic suites
+audit (`scripts/AxiomsAudit.lean`), the blueprint-to-code correspondence
+(`checkdecls` over `blueprint/lean_decls`), and the exact-arithmetic suites
 (`scripts/verify_all.py`); blueprint regeneration and Pages deployment are
 deliberately not part of CI.)

@@ -1,12 +1,12 @@
-cff-version: 1.2.0
+﻿cff-version: 1.2.0
 message: "If you use this software or blueprint, please cite it as below."
 title: "weingarten-lean: a machine-checked Lean 4 formalization of Weingarten calculus (unitary, orthogonal, and symplectic)"
 type: software
 authors:
   - family-names: West
     given-names: Daniel G.
-version: "2.2.0"
-date-released: "2026-07-16"
+version: "2.2.1"
+date-released: "2026-07-17"
 license: Apache-2.0
 repository-code: "https://github.com/SciSolv/weingarten-lean"
 keywords:
@@ -24,7 +24,7 @@ keywords:
   - unitary matrix integrals
 abstract: >-
   A complete, machine-checked Lean 4 + Mathlib formalization of the elementary
-  algebraic layer of Weingarten calculus across the three classical series —
+  algebraic layer of Weingarten calculus across the three classical series â€”
   unitary U(N), orthogonal O(N), and symplectic Sp(N). It covers the
   Jucys-Murphy factorization of the Gram element, l1/Neumann invertibility in the
   stable range, the rising and falling sum rules, the strict parity sign theorem

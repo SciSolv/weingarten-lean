@@ -35,13 +35,16 @@ jobs:
 
       # Fetch the prebuilt Mathlib cache and run `lake build`. A clean build is a
       # complete kernel verification of every result in the development. CI then
-      # additionally gates the axiom audit (scripts/AxiomsAudit.lean: every
+      # additionally gates: the axiom audit (scripts/AxiomsAudit.lean: every
       # Weingarten constant depends only on propext, Classical.choice, Quot.sound
-      # -- which excludes sorryAx and native_decide's Lean.ofReduceBool) and the
-      # exact-arithmetic cross-check suites (scripts/verify_all.py, Python
-      # standard library only). Linting and the blueprint/GitHub-Pages deployment
-      # remain intentionally not run here; the blueprint is provided as a
-      # committed PDF + dependency graph under docs/.
+      # -- which excludes sorryAx and native_decide's Lean.ofReduceBool); the
+      # blueprint-to-code correspondence (checkdecls: every declaration named by
+      # a blueprint \lean{} tag exists in the compiled environment; the list
+      # blueprint/lean_decls is regenerated from content.tex at each release);
+      # and the exact-arithmetic cross-check suites (scripts/verify_all.py,
+      # Python standard library only). Linting and the blueprint/GitHub-Pages
+      # deployment remain intentionally not run here; the blueprint is provided
+      # as a committed PDF + dependency graph under docs/.
       - name: Build project
         uses: leanprover/lean-action@434f25c2f80ded67bba02502ad3a86f25db50709 # 2025-07-02
         with:
@@ -50,6 +53,9 @@ jobs:
 
       - name: Axiom audit (excludes sorry and native_decide)
         run: lake env lean scripts/AxiomsAudit.lean
+
+      - name: Blueprint-to-code correspondence (checkdecls)
+        run: lake exe checkdecls blueprint/lean_decls
 
       - name: Exact-arithmetic cross-check suites
         run: python3 scripts/verify_all.py

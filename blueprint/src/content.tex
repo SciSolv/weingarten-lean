@@ -8,7 +8,7 @@ the strict parity sign theorem; the exact closed form for the cancellation
 ratio; and a certified below-threshold cell at $(N,n)=(2,3)$. A
 below-threshold package (Chapter~\ref{ch:below}) states both sum rules
 \emph{conditionally on the Penrose equations} --- hence at every $N$, with
-no character theory --- including the exact vanishing of the signed sum
+no irreducible-character theory --- including the exact vanishing of the signed sum
 for integer $1\le N<n$, the forced breakdown of the sign pattern, and the
 singularity of the Gram element, with the cell of Chapter~\ref{ch:cell}
 as the certified existence instance. Chapter~\ref{ch:haar} states the
@@ -106,8 +106,9 @@ range) --- for an \emph{unrestricted} real or complex parameter $z$ the
 singular set is the full integer band $\{-(n-1),\dots,n-1\}$ (the content
 spectrum $\prod_{(i,j)\in\lambda}(z+j-i)$; already at $n=2$, $z=-1$ the
 element $\delta_e-\delta_{(0\,1)}$ is a zero divisor), so the
-positive-only set printed there implicitly carries the nonnegativity
-qualification made explicit here; the same paper displays the rising sum rule
+positive-only set printed there \emph{requires} the nonnegativity
+qualification made explicit here (as printed, for unrestricted $z$ it
+conflicts with that paper's own display~(3.2) and sign-twist symmetry); the same paper displays the rising sum rule
 (Theorem~\ref{thm:rising}) as classical inside the proof of its
 Lemma~2.2 (present since v1, 24 October 2025) --- a located display of
 known mathematics, altering no attribution here; the exact vanishing of
@@ -275,8 +276,10 @@ $\mathcal G\mathcal W\mathcal G=\mathcal G$,
 $\mathcal W\mathcal G\mathcal W=\mathcal W$ exactly as they pass through
 inverses. Stating the rules conditionally on a Penrose partner makes them
 valid at \emph{every} $N$ --- including below threshold, where the Gram
-element is singular --- with no character theory, no Schur functions and
-no spectral theory. The stable-range rules of Chapter~\ref{ch:wg} become
+element is singular --- with no irreducible-character theory, no Schur
+functions and no spectral theory (the two one-dimensional characters,
+augmentation and sign, are of course exactly what the sum rules
+evaluate). The stable-range rules of Chapter~\ref{ch:wg} become
 one-line corollaries, so the analytic chapter is needed only for existence
 of the inverse and for the parity theorem. This is a formalization-design
 choice, not a claim of new theorems. Indeed the characterization itself is
@@ -394,9 +397,10 @@ $\mathcal G_n(z)$ on the irreducible indexed by $\lambda\vdash n$ is the
 content product $\prod_{(i,j)\in\lambda}(z+j-i)$, whose roots sweep the
 band (already at $n=2$, $z=-1$ the element
 $\mathcal G_2(-1)=\delta_e-\delta_{(0\,1)}$ is a zero divisor); the
-positive-only set printed in arXiv:2510.21186 therefore carries the same
-nonnegativity qualification adopted here --- its own display~(3.2) and
-sign-twist symmetry confirm the band. The formalized content of this node
+positive-only set printed in arXiv:2510.21186 therefore \emph{requires}
+the nonnegativity qualification adopted here --- as printed, for
+unrestricted $z$ it conflicts with the paper's own display~(3.2) and
+sign-twist symmetry, which confirm the band. The formalized content of this node
 is the singular direction for natural $1\le N<n$; the negative-integer
 companion is Theorem~\ref{thm:gram_singular_neg}, and the invertible
 direction off the band (a character-spectrum fact) is \emph{not}
@@ -2171,7 +2175,11 @@ group-side denominator above threshold, and the numerator zero for $r<n$,
 matching the pointwise vanishing of the Pfaffian of a rank-deficient skew
 matrix. For $n>M$ no $J$-closed column set exists --- the corner does not
 exist --- so Theorem~\ref{thm:symp_vanish_below} is the pseudo-inverse
-consistency statement, exactly parallel to $E[(\det)^2]$. Verified at ten
+consistency statement, exactly parallel to $E[(\det)^2]$. The displayed
+first moment is a project-side derivation (recorded in the design notes),
+conditional on the standard $\mathrm{Sp}(M)$ Haar--Weingarten moment
+formula --- itself outside the formalized scope --- exact-checked at the
+cells below and \emph{not} formalized. Verified at ten
 cells with brute-forced Grams and a direct $\mathrm{SU}(2)$ anchor
 (PF0--PF4); the first-moment formula was not located displayed (the
 Pfaffian point-process structure of symplectic truncations is well

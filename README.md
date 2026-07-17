@@ -4,7 +4,7 @@ A Lean 4 / Mathlib formalization of the algebraic foundations of **Weingarten ca
 
 Repository: [github.com/SciSolv/weingarten-lean](https://github.com/SciSolv/weingarten-lean)
 
-Every result here is machine-checked down to the logical axioms. To the best of a careful (but finite) search, this is the first end-to-end, computer-verified account of this foundational layer in any proof assistant.
+Every theorem here is machine-checked down to the logical axioms (the blueprint's five prose remarks — integral readings and one explicitly marked conjecture — carry no Lean proof obligation and are labeled as such). To the best of a careful (but finite) search, this is the first end-to-end, computer-verified account of this foundational layer in any proof assistant.
 
 ## Build Instructions
 
@@ -24,7 +24,7 @@ lake build
 
 The exact Mathlib commit is pinned in `lake-manifest.json`, so the build is reproducible. Note that `lake exe cache get` only retrieves prebuilt artifacts while the pinned commit remains in Mathlib's cache; for an older commit the cache may be unavailable, in which case `lake build` will compile Mathlib from source (slow, but produces an identical result).
 
-A clean build typechecks the declarations. Transitive sorry-freeness and trust-base cleanliness are established separately by scripts/AxiomsAudit.lean, which rejects sorryAx, native-evaluation trust axioms, and every axiom outside the declared allow-list. checkdecls verifies the correspondence between blueprint declaration names and Lean declarations.
+A clean build typechecks the declarations. Transitive `sorry`-freeness and trust-base cleanliness are established separately by [`scripts/AxiomsAudit.lean`](scripts/AxiomsAudit.lean), which rejects `sorryAx`, native-evaluation trust axioms, and every axiom outside the declared allow-list (see the Verification section below). `checkdecls` verifies the correspondence between blueprint declaration names and Lean declarations.
 
 
 ## Blueprint
@@ -70,7 +70,7 @@ This project is a formalization of the algebraic foundations of Weingarten calcu
 
 ## The architecture: a character-table-free route
 
-The standard development of Weingarten functions runs through zonal polynomials and symmetric-group character expansions. That machinery is rather heavy, and it really only delivers the **above-threshold** object — it presupposes the Gram matrix is invertible.
+The standard development of Weingarten functions runs through zonal polynomials and symmetric-group character expansions. That machinery is rather heavy, and below threshold — where the full Gram matrix is singular — it delivers the Weingarten function only through the character apparatus: Collins–Śniady invert the Gram data after restricting to the symmetric-group components with `ℓ(λ) ≤ N` (their eq. (9); Proposition 3.10 for the orthogonal case), i.e. they construct a pseudo-inverse spectrally. What is distinctive here is not the below-threshold object — that is standard — but an elementary, conditional derivation of the sum rules that never formalizes the character construction.
 
 This project instead characterizes the Weingarten function `W` via the two **Penrose equations**
 
@@ -151,7 +151,7 @@ The verification standard for the repository is the Lean development itself: all
 lake env lean scripts/AxiomsAudit.lean
 ```
 
-Continuous integration ([`.github/workflows/blueprint.yml`](.github/workflows/blueprint.yml)) gates every push on all three checks: the clean `lake build` (a complete kernel verification of every result), the axiom audit above, and the exact-arithmetic cross-check suites (`python3 scripts/verify_all.py`, described below). The blueprint PDF and dependency graph are committed under [`docs/`](docs/); regenerating them is deliberately not part of CI.
+Continuous integration ([`.github/workflows/blueprint.yml`](.github/workflows/blueprint.yml)) gates every push on all four checks: the clean `lake build` (a complete kernel verification of every result), the axiom audit above, the blueprint-to-code correspondence (`lake exe checkdecls blueprint/lean_decls` — every declaration named by a blueprint `\lean{}` tag exists in the compiled environment), and the exact-arithmetic cross-check suites (`python3 scripts/verify_all.py`, described below). The blueprint PDF and dependency graph are committed under [`docs/`](docs/); regenerating them is deliberately not part of CI.
 
 As a second, independent line of defense — against a definition that quietly fails to match the literature, or a transcription slip in a statement — the `scripts/` directory recomputes the finite content of every computational theorem from scratch, in exact rational arithmetic (Python standard library only — no floats, no external packages), and checks it against a genuinely independent computation.
 
