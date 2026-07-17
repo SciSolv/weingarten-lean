@@ -24,7 +24,7 @@ lake build
 
 The exact Mathlib commit is pinned in `lake-manifest.json`, so the build is reproducible. Note that `lake exe cache get` only retrieves prebuilt artifacts while the pinned commit remains in Mathlib's cache; for an older commit the cache may be unavailable, in which case `lake build` will compile Mathlib from source (slow, but produces an identical result).
 
-A clean `lake build` with no errors is a complete verification of every result described below. The development is fully `sorry`-free — no result depends on an unproved assumption — which can be confirmed by running `checkdecls` or by searching the source (`grep -rn sorry`).
+A clean build typechecks the declarations. Transitive sorry-freeness and trust-base cleanliness are established separately by scripts/AxiomsAudit.lean, which rejects sorryAx, native-evaluation trust axioms, and every axiom outside the declared allow-list. checkdecls verifies the correspondence between blueprint declaration names and Lean declarations.
 
 
 ## Blueprint
